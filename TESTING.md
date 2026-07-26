@@ -53,7 +53,14 @@ cursor is rendered in a separate transparent window.
 ## First-run and daily controls
 
 - [ ] First-run instructions appear once
-- [ ] Starting the five-second test enables one enlarged cursor
+- [ ] Try the cursor enables one enlarged cursor
+- [ ] Menu-bar popover fits completely on the built-in MacBook display
+- [ ] Popover shows only the six daily summaries and does not scroll
+- [ ] Every summary row opens the matching Cursor, Clicks, or General section
+- [ ] Settings opens as a separate 824 × 488 point window
+- [ ] Cursor, Clicks, and General sections fit without scrolling
+- [ ] Turning off Ring or Click sound hides its dependent controls
+- [ ] Settings spacing remains clear in both light and dark mode
 - [ ] A failed native-cursor hide leaves Recording mode off
 - [ ] Launch at Login works after the app is moved to Applications
 - [ ] Launch at Login survives a reboot

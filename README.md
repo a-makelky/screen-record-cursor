@@ -18,7 +18,8 @@ connection. It is a native Swift and AppKit app with no third-party dependencies
 - Offers an optional kinetic cursor whose tail swings behind its motion
 - Includes a guided first-run cursor test and Launch at Login
 - Toggles Recording mode globally with a customizable two-key shortcut
-- Lives entirely in the menu bar and stores settings in local `UserDefaults`
+- Uses a compact menu-bar panel for daily controls and a focused Settings window
+- Stores settings locally in `UserDefaults`
 
 The ring and cursor overlay never receive mouse events. Your clicks, drags,
 scrolling, and gestures continue to reach the app underneath.
