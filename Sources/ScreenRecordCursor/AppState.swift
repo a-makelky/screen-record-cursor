@@ -175,19 +175,20 @@ final class AppState: ObservableObject {
         cursorColorHex = defaults.string(
             forKey: Keys.cursorColorHex
         ) ?? "#000000"
-        ringVisibility = RingVisibilityMode.initial(
+        let initialRingVisibility = RingVisibilityMode.initial(
             storedRawValue: defaults.string(forKey: Keys.ringVisibility),
             legacyRingEnabled: defaults.object(
                 forKey: Keys.legacyRingEnabled
             ) as? Bool
         )
+        ringVisibility = initialRingVisibility
         ringDiameter = defaults.double(forKey: Keys.ringDiameter)
         ringThickness = defaults.double(forKey: Keys.ringThickness)
         cursorScale = defaults.double(forKey: Keys.cursorScale)
         let storedClickEffect = ClickEffect(
             rawValue: defaults.string(forKey: Keys.clickEffect) ?? ""
         ) ?? .ripple
-        clickEffect = ringVisibility == .onClick && storedClickEffect == .off
+        clickEffect = initialRingVisibility == .onClick && storedClickEffect == .off
             ? .ripple
             : storedClickEffect
         soundEnabled = defaults.bool(forKey: Keys.soundEnabled)
