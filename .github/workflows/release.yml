@@ -4,6 +4,11 @@ on:
   push:
     tags:
       - "v*.*.*"
+      - "!v*.*.*-*"
+    branches:
+      - main
+    paths:
+      - ".github/alpha-release-version"
 
 permissions:
   contents: read
@@ -39,6 +44,18 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v4
+      - name: Resolve release version
+        run: |
+          if [[ "$GITHUB_REF_TYPE" == "tag" ]]; then
+            release_version="$GITHUB_REF_NAME"
+          else
+            release_version="$(tr -d '[:space:]' < .github/alpha-release-version)"
+          fi
+          if [[ ! "$release_version" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+            echo "Version must use vMAJOR.MINOR.PATCH or vMAJOR.MINOR.PATCH-PRERELEASE" >&2
+            exit 1
+          fi
+          echo "RELEASE_VERSION=$release_version" >> "$GITHUB_ENV"
       - uses: actions/download-artifact@v4
         with:
           pattern: executable-*
@@ -46,13 +63,9 @@ jobs:
           merge-multiple: true
       - name: Create universal app
         env:
-          APP_VERSION: ${{ github.ref_name }}
           APP_BUILD: ${{ github.run_number }}
         run: |
-          if [[ ! "$APP_VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
-            echo "Tag must use vMAJOR.MINOR.PATCH or vMAJOR.MINOR.PATCH-PRERELEASE" >&2
-            exit 1
-          fi
+          APP_VERSION="$RELEASE_VERSION"
           APP_VERSION="${APP_VERSION#v}"
           APP_VERSION="${APP_VERSION%%-*}"
           mkdir -p universal release
@@ -76,23 +89,24 @@ jobs:
         run: |
           ditto -c -k --sequesterRsrc --keepParent \
             "Screen Record Cursor.app" \
-            "Screen-Record-Cursor-${GITHUB_REF_NAME}.zip"
-          shasum -a 256 "Screen-Record-Cursor-${GITHUB_REF_NAME}.zip" \
-            > "Screen-Record-Cursor-${GITHUB_REF_NAME}.sha256"
+            "Screen-Record-Cursor-${RELEASE_VERSION}.zip"
+          shasum -a 256 "Screen-Record-Cursor-${RELEASE_VERSION}.zip" \
+            > "Screen-Record-Cursor-${RELEASE_VERSION}.sha256"
       - name: Publish GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           release_flags=()
-          release_title="Screen Record Cursor $GITHUB_REF_NAME"
-          if [[ "$GITHUB_REF_NAME" == *-* ]]; then
+          release_title="Screen Record Cursor $RELEASE_VERSION"
+          if [[ "$RELEASE_VERSION" == *-* ]]; then
             release_flags+=(--prerelease)
             release_title="$release_title (Alpha)"
           fi
 
-          gh release create "$GITHUB_REF_NAME" \
-            release/Screen-Record-Cursor-"$GITHUB_REF_NAME".zip \
-            release/Screen-Record-Cursor-"$GITHUB_REF_NAME".sha256 \
+          gh release create "$RELEASE_VERSION" \
+            release/Screen-Record-Cursor-"$RELEASE_VERSION".zip \
+            release/Screen-Record-Cursor-"$RELEASE_VERSION".sha256 \
+            --target "$GITHUB_SHA" \
             --generate-notes \
             --title "$release_title" \
             "${release_flags[@]}"
