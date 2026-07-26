@@ -301,35 +301,24 @@ struct SettingsView: View {
 
             if state.hotKeyEnabled {
                 HStack {
-                    Picker(
-                        "Modifier",
-                        selection: Binding(
-                            get: { state.hotKeyModifier },
-                            set: { state.setHotKeyModifier($0) }
-                        )
-                    ) {
-                        ForEach(HotKeyModifier.allCases) { modifier in
-                            Text(modifier.label).tag(modifier)
-                        }
-                    }
-
-                    Picker(
-                        "Key",
-                        selection: Binding(
-                            get: { state.hotKeyKey },
-                            set: { state.setHotKeyKey($0) }
-                        )
-                    ) {
-                        ForEach(HotKeyKey.allCases) { key in
-                            Text(key.label).tag(key)
-                        }
-                    }
-                    .frame(width: 74)
+                    Text("Shortcut")
+                    Spacer()
+                    ShortcutRecorderView(
+                        shortcut: state.hotKeyShortcut,
+                        onCapture: state.setHotKeyShortcut,
+                        onClear: state.clearHotKey,
+                        onMessage: state.setHotKeyMessage
+                    )
+                    .frame(width: 150, height: 28)
                 }
 
-                Text("\(state.hotKeyLabel) toggles Recording mode from any app.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                Text(
+                    "Click the field, then press one key or one modifier plus one key. "
+                        + "Escape cancels; Delete clears."
+                )
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
             }
 
             if let hotKeyMessage = state.hotKeyMessage {
