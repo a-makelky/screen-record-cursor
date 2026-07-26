@@ -74,7 +74,7 @@ final class NativeCursorVisibilityController {
             guard
                 let self,
                 self.wantsCursorHidden,
-                CGCursorIsVisible()
+                CGCursorIsVisible() != 0
             else {
                 return
             }
