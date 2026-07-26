@@ -14,6 +14,7 @@ connection. It is a native Swift and AppKit app with no third-party dependencies
 - Shows a ripple, ring blink, both, or no effect on mouse-down
 - Plays a subtle, procedurally generated click sound
 - Offers an optional kinetic cursor whose tail swings behind its motion
+- Includes a guided first-run cursor test and Launch at Login
 - Lives entirely in the menu bar and stores settings in local `UserDefaults`
 
 The ring and cursor overlay never receive mouse events. Your clicks, drags,
@@ -140,6 +141,9 @@ Mac hardware with Descript, QuickTime, OBS, Retina displays, and multi-display
 setups before the project is labeled stable.
 
 See [GOAL.md](GOAL.md) for the acceptance checklist.
+See [TESTING.md](TESTING.md) for the real-Mac release matrix and
+[docs/PUBLIC_RELEASE.md](docs/PUBLIC_RELEASE.md) for the path to a paid,
+notarized release.
 
 ## License
 

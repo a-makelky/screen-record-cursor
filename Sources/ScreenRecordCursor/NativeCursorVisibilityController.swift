@@ -23,20 +23,31 @@ final class NativeCursorVisibilityController {
     private var didResolveCursorIsVisible = false
     private var watchdog: DispatchSourceTimer?
 
-    func hideForRecording() {
-        guard !wantsCursorHidden else { return }
+    @discardableResult
+    func hideForRecording() -> Bool {
+        guard !wantsCursorHidden else { return hideRequestOutstanding }
         wantsCursorHidden = true
 
         guard enableBackgroundCursorControl() else {
+            wantsCursorHidden = false
             NSLog(
                 "Screen Record Cursor could not enable background cursor control; "
                     + "the native cursor will remain visible."
             )
-            return
+            return false
         }
 
-        replaceHideRequest()
+        guard replaceHideRequest() else {
+            wantsCursorHidden = false
+            NSLog(
+                "Screen Record Cursor could not hide the native cursor; "
+                    + "Recording mode was not started."
+            )
+            return false
+        }
+
         startWatchdog()
+        return true
     }
 
     func showAfterRecording() {
@@ -48,7 +59,8 @@ final class NativeCursorVisibilityController {
     /// WindowServer or Dock activity can occasionally make the native cursor
     /// visible again. Replacing our one outstanding request restores invisibility
     /// without increasing Quartz's balanced hide count.
-    private func replaceHideRequest() {
+    @discardableResult
+    private func replaceHideRequest() -> Bool {
         if hideRequestOutstanding {
             _ = CGDisplayShowCursor(CGMainDisplayID())
             hideRequestOutstanding = false
@@ -56,6 +68,7 @@ final class NativeCursorVisibilityController {
 
         let result = CGDisplayHideCursor(CGMainDisplayID())
         hideRequestOutstanding = result == .success
+        return hideRequestOutstanding
     }
 
     private func releaseHideRequest() {

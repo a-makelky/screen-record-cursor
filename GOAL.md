@@ -22,8 +22,12 @@ paid runtime dependencies.
 - [x] Mouse-event pass-through
 - [x] Intel and Apple Silicon CI builds
 - [x] Universal app release automation
-- [ ] Native build passes in GitHub Actions
-- [ ] Descript full-display and region recording verified on a real Mac
+- [x] Native build passes in GitHub Actions
+- [x] Descript full-display and region recording verified on a real Mac
+- [x] Native cursor restoration verified during normal use
+- [ ] Native cursor restoration verified across the full safety lifecycle
+- [ ] First-run onboarding verified on a clean install
+- [ ] Launch at Login verified after reboot
 - [ ] Click sound verified with Descript computer audio capture
 - [ ] Retina and mixed-scale multi-display alignment verified
 - [ ] Permission denial and recovery verified
@@ -38,3 +42,6 @@ overlay and event monitor.
 
 The app is stable only after the unchecked real-device criteria above are
 completed.
+
+See [TESTING.md](TESTING.md) for the real-device release matrix and
+[docs/PUBLIC_RELEASE.md](docs/PUBLIC_RELEASE.md) for the paid-release sequence.
