@@ -66,7 +66,7 @@ Screen Record Cursor provide the visible pointer.
 
 ## Kinetic cursor
 
-Kinetic mode samples the real cursor position at up to 120 Hz. Only the drawn
+Kinetic mode samples the real cursor position at about 60 Hz. Only the drawn
 arrow rotates. The ring and click hotspot remain fixed to the actual pointer
 position, so the visual effect does not make clicks inaccurate.
 

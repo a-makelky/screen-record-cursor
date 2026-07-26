@@ -79,8 +79,8 @@ final class KineticCursorModelTests: XCTestCase {
         var model = KineticCursorModel()
         _ = model.update(position: .zero, timestamp: 1, enabled: true)
         _ = model.update(
-            position: CGPoint(x: .nan, y: 20),
-            timestamp: .nan,
+            position: CGPoint(x: CGFloat.nan, y: 20),
+            timestamp: Double.nan,
             enabled: true
         )
 
