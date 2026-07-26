@@ -130,16 +130,13 @@ struct SettingsView: View {
 
             Spacer()
 
-            Toggle(
-                "Recording mode",
+            PersistentRecordingSwitch(
                 isOn: Binding(
                     get: { state.isActive },
                     set: { state.setRecordingMode($0) }
                 )
             )
-                .labelsHidden()
-                .toggleStyle(.switch)
-                .help("Show or hide the enhanced recording cursor")
+            .help("Show or hide the enhanced recording cursor")
         }
     }
 
@@ -323,16 +320,19 @@ struct SettingsView: View {
             )
 
             if state.hotKeyEnabled {
-                HStack {
+                VStack(alignment: .leading, spacing: 6) {
                     Text("Shortcut")
-                    Spacer()
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+
                     ShortcutRecorderView(
                         shortcut: state.hotKeyShortcut,
                         onCapture: state.setHotKeyShortcut,
                         onClear: state.clearHotKey,
                         onMessage: state.setHotKeyMessage
                     )
-                    .frame(width: 150, height: 28)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 38)
                 }
 
                 Text(
@@ -488,6 +488,40 @@ struct SettingsView: View {
             }
             Slider(value: value, in: range)
         }
+    }
+}
+
+private struct PersistentRecordingSwitch: View {
+    @Binding var isOn: Bool
+
+    var body: some View {
+        Button {
+            isOn.toggle()
+        } label: {
+            ZStack(alignment: isOn ? .trailing : .leading) {
+                Capsule()
+                    .fill(isOn ? enabledColor : disabledColor)
+                    .frame(width: 52, height: 30)
+
+                Circle()
+                    .fill(Color.white)
+                    .shadow(color: .black.opacity(0.22), radius: 1.5, y: 1)
+                    .frame(width: 24, height: 24)
+                    .padding(3)
+            }
+            .animation(.easeInOut(duration: 0.14), value: isOn)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Recording mode")
+        .accessibilityValue(isOn ? "On" : "Off")
+    }
+
+    private var enabledColor: Color {
+        Color(red: 0.039, green: 0.518, blue: 1)
+    }
+
+    private var disabledColor: Color {
+        Color(nsColor: .tertiaryLabelColor).opacity(0.32)
     }
 }
 
