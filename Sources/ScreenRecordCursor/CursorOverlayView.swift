@@ -128,12 +128,19 @@ final class CursorOverlayView: NSView {
         path.line(to: CGPoint(x: 21, y: -16.5))
         path.close()
 
+        // First paint a wider opaque silhouette. The overlay lives above the
+        // system cursor, and this antialiased coverage pass prevents native
+        // cursor pixels from leaking through around the arrowhead.
+        NSColor.white.setStroke()
+        path.lineJoinStyle = .round
+        path.lineWidth = 4.8 / settings.cursorScale
+        path.stroke()
+
         NSColor.black.setFill()
         path.fill()
 
         NSColor.white.withAlphaComponent(0.98).setStroke()
-        path.lineJoinStyle = .round
-        path.lineWidth = 1.4 / settings.cursorScale
+        path.lineWidth = 1.8 / settings.cursorScale
         path.stroke()
 
         context.restoreGState()
