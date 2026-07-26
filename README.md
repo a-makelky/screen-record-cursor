@@ -8,11 +8,11 @@ connection. It is a native Swift and AppKit app with no third-party dependencies
 
 ## What it does
 
-- Draws a persistent colored ring at the real cursor hotspot
+- Shows the colored ring only while clicking by default, with Always and Off options
 - Adds a larger, high-contrast vector cursor at the native cursor hotspot
 - Includes 10 preset colors and a full macOS color picker
 - Separately customizes the ring and cursor colors
-- Can hide the ring while keeping the enlarged kinetic cursor and click audio
+- Can hide the ring at rest while keeping click animation and audio feedback
 - Shows a ripple, ring blink, both, or no effect on mouse-down
 - Offers five bundled WAV click sounds, from mouse clicks to playful pops
 - Offers an optional kinetic cursor whose tail swings behind its motion

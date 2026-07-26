@@ -1,4 +1,5 @@
 import AppKit
+import CursorCore
 import SwiftUI
 
 struct SettingsWindowView: View {
@@ -93,16 +94,23 @@ struct SettingsWindowView: View {
             }
 
             settingsCard {
-                HStack {
+                HStack(spacing: 16) {
                     Text("Ring")
                         .font(.callout.weight(.semibold))
                     Spacer()
-                    Toggle("", isOn: $state.ringEnabled)
-                        .labelsHidden()
-                        .toggleStyle(.switch)
+
+                    Picker("Ring visibility", selection: $state.ringVisibility) {
+                        ForEach(RingVisibilityMode.allCases) { visibility in
+                            Text(visibility.label).tag(visibility)
+                        }
+                    }
+                    .labelsHidden()
+                    .pickerStyle(.segmented)
+                    .frame(width: 260)
+                    .accessibilityLabel("Ring visibility")
                 }
 
-                if state.ringEnabled {
+                if state.ringVisibility != .off {
                     paletteRow(
                         title: "Color",
                         colors: AppState.defaultColors,
@@ -137,15 +145,15 @@ struct SettingsWindowView: View {
             )
 
             settingsCard(title: "Click feedback") {
-                if state.ringEnabled {
+                if state.ringVisibility.allowsClickFeedback {
                     Picker("Effect", selection: $state.clickEffect) {
-                        ForEach(ClickEffect.allCases) { effect in
+                        ForEach(availableClickEffects) { effect in
                             Text(effect.label).tag(effect)
                         }
                     }
                     .pickerStyle(.segmented)
                 } else {
-                    Text("Turn on the ring in Cursor settings to use visual feedback.")
+                    Text("Set Ring to Always or On Click to use visual feedback.")
                         .font(.callout)
                         .foregroundStyle(.secondary)
                 }
@@ -289,6 +297,12 @@ struct SettingsWindowView: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
+    }
+
+    private var availableClickEffects: [ClickEffect] {
+        state.ringVisibility == .onClick
+            ? ClickEffect.animatedCases
+            : ClickEffect.allCases
     }
 
     private func settingsCard<Content: View>(

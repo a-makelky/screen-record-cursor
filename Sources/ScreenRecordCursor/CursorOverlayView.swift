@@ -10,14 +10,24 @@ final class CursorOverlayView: NSView {
     var settings = CursorVisualSettings(
         ringColor: .systemRed,
         cursorColor: .black,
-        ringEnabled: true,
+        ringVisibility: .onClick,
         ringDiameter: 44,
         ringThickness: 4,
         cursorScale: 1.65,
         clickEffect: .ripple,
         kineticEnabled: false
     ) {
-        didSet { needsDisplay = true }
+        didSet {
+            let shouldClearClickAnimation = (
+                !settings.ringVisibility.allowsClickFeedback
+                    || settings.clickEffect == .off
+            )
+            if shouldClearClickAnimation {
+                ripples.removeAll()
+                pulseStartedAt = nil
+            }
+            needsDisplay = true
+        }
     }
 
     var rotationRadians: Double = 0 {
@@ -31,6 +41,8 @@ final class CursorOverlayView: NSView {
     override var isOpaque: Bool { false }
 
     func registerClick(at timestamp: TimeInterval) {
+        guard settings.ringVisibility.allowsClickFeedback else { return }
+
         switch settings.clickEffect {
         case .ripple:
             ripples.append(Ripple(startedAt: timestamp))
@@ -63,14 +75,24 @@ final class CursorOverlayView: NSView {
         super.draw(dirtyRect)
 
         let hotspot = CGPoint(x: bounds.midX, y: bounds.midY)
-        if settings.ringEnabled {
+        if settings.ringVisibility.allowsClickFeedback {
             drawRipples(around: hotspot)
-            drawPersistentRing(around: hotspot)
+        }
+        if settings.ringVisibility.showsBaseRing(
+            isClickAnimationActive: pulseStartedAt != nil
+        ) {
+            drawPersistentRing(
+                around: hotspot,
+                clickOnly: !settings.ringVisibility.showsPersistentRing
+            )
         }
         drawCursor(at: hotspot)
     }
 
-    private func drawPersistentRing(around point: CGPoint) {
+    private func drawPersistentRing(
+        around point: CGPoint,
+        clickOnly: Bool = false
+    ) {
         var opacity: CGFloat = 0.94
         var thickness = settings.ringThickness
         var diameter = settings.ringDiameter
@@ -81,6 +103,10 @@ final class CursorOverlayView: NSView {
             opacity = 0.94 - wave * 0.34
             thickness += wave * 5
             diameter += wave * 8
+
+            if clickOnly {
+                opacity *= CGFloat(1 - progress)
+            }
         }
 
         let rect = CGRect(

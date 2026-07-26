@@ -59,7 +59,7 @@ cursor is rendered in a separate transparent window.
 - [ ] Every summary row opens the matching Cursor, Clicks, or General section
 - [ ] Settings opens as a separate 824 × 488 point window
 - [ ] Cursor, Clicks, and General sections fit without scrolling
-- [ ] Turning off Ring or Click sound hides its dependent controls
+- [ ] Setting Ring to Off or turning off Click sound hides dependent controls
 - [ ] Settings spacing remains clear in both light and dark mode
 - [ ] A failed native-cursor hide leaves Recording mode off
 - [ ] Launch at Login works after the app is moved to Applications
@@ -67,7 +67,12 @@ cursor is rendered in a separate transparent window.
 - [ ] Reset Settings restores the documented defaults
 - [ ] Support opens the repository issue page
 - [ ] Visual and sound settings persist after relaunch
-- [ ] Ring-off mode leaves only the enlarged cursor and optional click sound
+- [ ] Ring Always mode keeps the ring visible between clicks
+- [ ] Ring On Click is the default after a fresh install or Reset Settings
+- [ ] Ring On Click mode hides the ring at rest and reveals it only during Ripple,
+      Blink, or Both
+- [ ] Ring Off mode leaves only the enlarged cursor and optional click sound
+- [ ] Explicitly saved Ring on/off preferences migrate to Always/Off after updating
 - [ ] Every cursor color retains a high-contrast outline
 - [ ] All five click sounds preview and play during Recording mode
 - [ ] Default Control-semicolon shortcut toggles Recording mode from another app

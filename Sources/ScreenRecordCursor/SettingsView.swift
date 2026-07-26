@@ -1,4 +1,5 @@
 import AppKit
+import CursorCore
 import SwiftUI
 
 struct SettingsView: View {
@@ -95,7 +96,7 @@ struct SettingsView: View {
         VStack(spacing: 0) {
             quickRow(
                 title: "Ring",
-                value: state.ringEnabled ? "On" : "Off",
+                value: state.ringVisibility.label,
                 systemImage: "circle.fill",
                 color: Color(nsColor: NSColor(hex: state.colorHex) ?? .systemRed),
                 section: .cursor
@@ -113,7 +114,9 @@ struct SettingsView: View {
 
             quickRow(
                 title: "Click feedback",
-                value: state.ringEnabled ? state.clickEffect.label : "Off",
+                value: state.ringVisibility.allowsClickFeedback
+                    ? state.clickEffect.label
+                    : "Off",
                 systemImage: "cursorarrow.click",
                 color: .accentColor,
                 section: .clicks

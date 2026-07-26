@@ -1,5 +1,6 @@
 import AppKit
 import Combine
+import CursorCore
 import Foundation
 
 @MainActor
@@ -55,9 +56,18 @@ final class AppState: ObservableObject {
         }
     }
 
-    @Published var ringEnabled: Bool {
+    @Published var ringVisibility: RingVisibilityMode {
         didSet {
-            save(ringEnabled, for: Keys.ringEnabled)
+            save(ringVisibility.rawValue, for: Keys.ringVisibility)
+            save(
+                ringVisibility != .off,
+                for: Keys.legacyRingEnabled
+            )
+
+            if ringVisibility == .onClick, clickEffect == .off {
+                clickEffect = .ripple
+            }
+
             overlayController.refreshSettings()
         }
     }
@@ -126,7 +136,8 @@ final class AppState: ObservableObject {
     private enum Keys {
         static let colorHex = "colorHex"
         static let cursorColorHex = "cursorColorHex"
-        static let ringEnabled = "ringEnabled"
+        static let ringVisibility = "ringVisibility"
+        static let legacyRingEnabled = "ringEnabled"
         static let ringDiameter = "ringDiameter"
         static let ringThickness = "ringThickness"
         static let cursorScale = "cursorScale"
@@ -146,7 +157,6 @@ final class AppState: ObservableObject {
         defaults.register(defaults: [
             Keys.colorHex: "#FF3B30",
             Keys.cursorColorHex: "#000000",
-            Keys.ringEnabled: true,
             Keys.ringDiameter: 44.0,
             Keys.ringThickness: 4.0,
             Keys.cursorScale: 1.65,
@@ -165,13 +175,21 @@ final class AppState: ObservableObject {
         cursorColorHex = defaults.string(
             forKey: Keys.cursorColorHex
         ) ?? "#000000"
-        ringEnabled = defaults.bool(forKey: Keys.ringEnabled)
+        ringVisibility = RingVisibilityMode.initial(
+            storedRawValue: defaults.string(forKey: Keys.ringVisibility),
+            legacyRingEnabled: defaults.object(
+                forKey: Keys.legacyRingEnabled
+            ) as? Bool
+        )
         ringDiameter = defaults.double(forKey: Keys.ringDiameter)
         ringThickness = defaults.double(forKey: Keys.ringThickness)
         cursorScale = defaults.double(forKey: Keys.cursorScale)
-        clickEffect = ClickEffect(
+        let storedClickEffect = ClickEffect(
             rawValue: defaults.string(forKey: Keys.clickEffect) ?? ""
         ) ?? .ripple
+        clickEffect = ringVisibility == .onClick && storedClickEffect == .off
+            ? .ripple
+            : storedClickEffect
         soundEnabled = defaults.bool(forKey: Keys.soundEnabled)
         soundVolume = defaults.double(forKey: Keys.soundVolume)
         soundStyle = ClickSoundStyle(
@@ -194,7 +212,7 @@ final class AppState: ObservableObject {
                 self?.visualSettings ?? CursorVisualSettings(
                     ringColor: .systemRed,
                     cursorColor: .black,
-                    ringEnabled: true,
+                    ringVisibility: .onClick,
                     ringDiameter: 44,
                     ringThickness: 4,
                     cursorScale: 1.65,
@@ -213,13 +231,17 @@ final class AppState: ObservableObject {
 
         refreshLaunchAtLoginStatus()
         configureGlobalHotKey()
+
+        if defaults.string(forKey: Keys.ringVisibility) == nil {
+            save(ringVisibility.rawValue, for: Keys.ringVisibility)
+        }
     }
 
     var visualSettings: CursorVisualSettings {
         CursorVisualSettings(
             ringColor: NSColor(hex: colorHex) ?? .systemRed,
             cursorColor: NSColor(hex: cursorColorHex) ?? .black,
-            ringEnabled: ringEnabled,
+            ringVisibility: ringVisibility,
             ringDiameter: ringDiameter,
             ringThickness: ringThickness,
             cursorScale: cursorScale,
@@ -361,7 +383,7 @@ final class AppState: ObservableObject {
     func resetSettings() {
         colorHex = "#FF3B30"
         cursorColorHex = "#000000"
-        ringEnabled = true
+        ringVisibility = .onClick
         ringDiameter = 44
         ringThickness = 4
         cursorScale = 1.65

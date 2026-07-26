@@ -1,4 +1,5 @@
 import AppKit
+import CursorCore
 
 enum ClickEffect: String, CaseIterable, Identifiable {
     case ripple
@@ -13,6 +14,18 @@ enum ClickEffect: String, CaseIterable, Identifiable {
         case .ripple: "Ripple"
         case .pulse: "Blink"
         case .both: "Both"
+        case .off: "Off"
+        }
+    }
+
+    static let animatedCases: [ClickEffect] = [.ripple, .pulse, .both]
+}
+
+extension RingVisibilityMode {
+    var label: String {
+        switch self {
+        case .always: "Always"
+        case .onClick: "On Click"
         case .off: "Off"
         }
     }
@@ -51,7 +64,7 @@ enum ClickSoundStyle: String, CaseIterable, Identifiable {
 struct CursorVisualSettings {
     var ringColor: NSColor
     var cursorColor: NSColor
-    var ringEnabled: Bool
+    var ringVisibility: RingVisibilityMode
     var ringDiameter: CGFloat
     var ringThickness: CGFloat
     var cursorScale: CGFloat
