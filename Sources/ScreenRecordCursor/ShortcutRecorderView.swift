@@ -40,13 +40,20 @@ final class ShortcutRecorderControl: NSView {
 
     override var acceptsFirstResponder: Bool { true }
     override var intrinsicContentSize: NSSize {
-        NSSize(width: 150, height: 28)
+        NSSize(width: 260, height: 38)
     }
 
     override func mouseDown(with event: NSEvent) {
-        isRecording = true
-        onMessage?(nil)
         window?.makeFirstResponder(self)
+    }
+
+    override func becomeFirstResponder() -> Bool {
+        let accepted = super.becomeFirstResponder()
+        if accepted {
+            isRecording = true
+            onMessage?(nil)
+        }
+        return accepted
     }
 
     override func keyDown(with event: NSEvent) {
@@ -84,27 +91,31 @@ final class ShortcutRecorderControl: NSView {
         return super.resignFirstResponder()
     }
 
+    override func resetCursorRects() {
+        addCursorRect(bounds, cursor: .pointingHand)
+    }
+
     override func draw(_ dirtyRect: NSRect) {
-        let rect = bounds.insetBy(dx: 0.5, dy: 0.5)
-        let path = NSBezierPath(roundedRect: rect, xRadius: 6, yRadius: 6)
+        let rect = bounds.insetBy(dx: 1, dy: 1)
+        let path = NSBezierPath(roundedRect: rect, xRadius: 8, yRadius: 8)
 
         (isRecording
-            ? NSColor.controlAccentColor.withAlphaComponent(0.14)
+            ? NSColor.systemBlue
             : NSColor.controlBackgroundColor
         ).setFill()
         path.fill()
 
         (isRecording
-            ? NSColor.controlAccentColor
+            ? NSColor.white.withAlphaComponent(0.9)
             : NSColor.separatorColor
         ).setStroke()
-        path.lineWidth = isRecording ? 1.5 : 1
+        path.lineWidth = isRecording ? 2 : 1
         path.stroke()
 
-        let text = isRecording ? "Type shortcut…" : shortcut.displayLabel
+        let text = isRecording ? "Press shortcut now" : shortcut.displayLabel
         let attributes: [NSAttributedString.Key: Any] = [
             .font: NSFont.monospacedSystemFont(ofSize: 13, weight: .medium),
-            .foregroundColor: NSColor.labelColor
+            .foregroundColor: isRecording ? NSColor.white : NSColor.labelColor
         ]
         let size = text.size(withAttributes: attributes)
         let origin = NSPoint(
