@@ -13,6 +13,7 @@ final class CursorOverlayController {
     private var clickMonitor: GlobalClickMonitor?
     private var kineticModel = KineticCursorModel()
     private let soundPlayer = ClickSoundPlayer()
+    private let nativeCursorVisibility = NativeCursorVisibilityController()
     private var lastPosition: CGPoint?
 
     init(
@@ -56,6 +57,7 @@ final class CursorOverlayController {
         kineticModel.reset()
         updateFrame()
         panel.orderFrontRegardless()
+        nativeCursorVisibility.hideForRecording()
 
         let monitor = GlobalClickMonitor { [weak self] in
             self?.handleClick()
@@ -89,6 +91,7 @@ final class CursorOverlayController {
         overlayView = nil
         lastPosition = nil
         kineticModel.reset()
+        nativeCursorVisibility.showAfterRecording()
     }
 
     func refreshSettings() {
@@ -134,9 +137,8 @@ final class CursorOverlayController {
 }
 
 final class CursorOverlayPanel: NSPanel {
-    /// The native pointer is composited at the cursor window level. Keeping the
-    /// replacement overlay one level above it prevents the small system pointer
-    /// from appearing nested inside the enlarged arrow.
+    /// Keep the replacement visible above ordinary app and system UI windows.
+    /// Recording mode separately hides the hardware-composited native cursor.
     static let aboveSystemCursorLevel = NSWindow.Level(
         rawValue: Int(CGWindowLevelForKey(.cursorWindow)) + 1
     )

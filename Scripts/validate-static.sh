@@ -10,6 +10,7 @@ required=(
   "Sources/CursorCore/KineticCursorModel.swift"
   "Sources/ScreenRecordCursor/ScreenRecordCursorApp.swift"
   "Sources/ScreenRecordCursor/CursorOverlayController.swift"
+  "Sources/ScreenRecordCursor/NativeCursorVisibilityController.swift"
   "Sources/ScreenRecordCursor/GlobalClickMonitor.swift"
   "Tests/CursorCoreTests/KineticCursorModelTests.swift"
   "LICENSE"
@@ -50,9 +51,16 @@ for script in Scripts/*.sh; do
 done
 
 if grep -R -nE \
-  'URLSession|NSURLConnection|import Network|import WebKit|OpenAI|Anthropic|telemetry|analytics|CGEventPost|CGEvent\.post|AXUIElement|CGDisplayHideCursor|CGS[A-Z]|SkyLight' \
+  'URLSession|NSURLConnection|import Network|import WebKit|OpenAI|Anthropic|telemetry|analytics|CGEventPost|CGEvent\.post|AXUIElement' \
   Sources; then
   echo "Unexpected network, AI, telemetry, event-posting, or Accessibility API." >&2
+  exit 1
+fi
+
+cursor_api_uses="$(grep -R -lE 'CGDisplay(Hide|Show)Cursor|SetsCursorInBackground|CGS[A-Z]|SLS[A-Z]' Sources || true)"
+if [[ "$cursor_api_uses" != "Sources/ScreenRecordCursor/NativeCursorVisibilityController.swift" ]]; then
+  echo "Cursor visibility APIs must remain isolated in NativeCursorVisibilityController.swift." >&2
+  printf '%s\n' "$cursor_api_uses" >&2
   exit 1
 fi
 
