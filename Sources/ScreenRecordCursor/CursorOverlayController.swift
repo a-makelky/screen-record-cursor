@@ -1,0 +1,141 @@
+import AppKit
+import CursorCore
+
+@MainActor
+final class CursorOverlayController {
+    private let overlaySize = CGSize(width: 256, height: 256)
+    private let settingsProvider: @MainActor () -> CursorVisualSettings
+    private let clickSoundProvider: @MainActor () -> Float?
+
+    private var panel: CursorOverlayPanel?
+    private var overlayView: CursorOverlayView?
+    private var frameTimer: DispatchSourceTimer?
+    private var clickMonitor: GlobalClickMonitor?
+    private var kineticModel = KineticCursorModel()
+    private let soundPlayer = ClickSoundPlayer()
+    private var lastPosition: CGPoint?
+
+    init(
+        settingsProvider: @escaping @MainActor () -> CursorVisualSettings,
+        clickSoundProvider: @escaping @MainActor () -> Float?
+    ) {
+        self.settingsProvider = settingsProvider
+        self.clickSoundProvider = clickSoundProvider
+    }
+
+    func start() {
+        guard panel == nil else { return }
+
+        let view = CursorOverlayView(frame: CGRect(origin: .zero, size: overlaySize))
+        view.settings = settingsProvider()
+
+        let panel = CursorOverlayPanel(
+            contentRect: CGRect(origin: .zero, size: overlaySize),
+            styleMask: [.borderless, .nonactivatingPanel],
+            backing: .buffered,
+            defer: false
+        )
+        panel.contentView = view
+        panel.backgroundColor = .clear
+        panel.isOpaque = false
+        panel.hasShadow = false
+        panel.ignoresMouseEvents = true
+        panel.hidesOnDeactivate = false
+        panel.isReleasedWhenClosed = false
+        panel.level = NSWindow.Level(
+            rawValue: Int(CGWindowLevelForKey(.assistiveTechHighWindow))
+        )
+        panel.collectionBehavior = [
+            .canJoinAllSpaces,
+            .fullScreenAuxiliary,
+            .stationary,
+            .ignoresCycle
+        ]
+        panel.sharingType = .readWrite
+
+        self.panel = panel
+        overlayView = view
+        kineticModel.reset()
+        updateFrame()
+        panel.orderFrontRegardless()
+
+        let monitor = GlobalClickMonitor { [weak self] in
+            self?.handleClick()
+        }
+        clickMonitor = monitor
+        monitor.start()
+
+        let timer = DispatchSource.makeTimerSource(queue: .main)
+        timer.schedule(
+            deadline: .now(),
+            repeating: .milliseconds(16),
+            leeway: .milliseconds(2)
+        )
+        timer.setEventHandler { [weak self] in
+            self?.updateFrame()
+        }
+        frameTimer = timer
+        timer.resume()
+    }
+
+    func stop() {
+        frameTimer?.cancel()
+        frameTimer = nil
+
+        clickMonitor?.stop()
+        clickMonitor = nil
+
+        panel?.orderOut(nil)
+        panel?.close()
+        panel = nil
+        overlayView = nil
+        lastPosition = nil
+        kineticModel.reset()
+    }
+
+    func refreshSettings() {
+        overlayView?.settings = settingsProvider()
+    }
+
+    private func updateFrame() {
+        guard let panel, let overlayView else { return }
+
+        let position = NSEvent.mouseLocation
+        let timestamp = ProcessInfo.processInfo.systemUptime
+        let settings = settingsProvider()
+        let motion = kineticModel.update(
+            position: position,
+            timestamp: timestamp,
+            enabled: settings.kineticEnabled
+        )
+
+        if abs(overlayView.rotationRadians - motion.rotationRadians) > 0.0001 {
+            overlayView.rotationRadians = motion.rotationRadians
+        }
+        overlayView.advance(to: timestamp)
+
+        if lastPosition != position {
+            panel.setFrameOrigin(
+                CGPoint(
+                    x: position.x - overlaySize.width / 2,
+                    y: position.y - overlaySize.height / 2
+                )
+            )
+            lastPosition = position
+        }
+    }
+
+    private func handleClick() {
+        let timestamp = ProcessInfo.processInfo.systemUptime
+        overlayView?.registerClick(at: timestamp)
+
+        if let volume = clickSoundProvider() {
+            soundPlayer.play(volume: volume)
+        }
+    }
+}
+
+final class CursorOverlayPanel: NSPanel {
+    override var canBecomeKey: Bool { false }
+    override var canBecomeMain: Bool { false }
+}

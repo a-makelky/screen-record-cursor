@@ -1,0 +1,89 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - runner: macos-15
+            architecture: arm64
+          - runner: macos-15-intel
+            architecture: x86_64
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+      - run: swift test --parallel
+      - run: swift build -c release
+      - name: Stage executable
+        run: |
+          mkdir -p output
+          cp "$(swift build -c release --show-bin-path)/ScreenRecordCursor" \
+            "output/ScreenRecordCursor-${{ matrix.architecture }}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: executable-${{ matrix.architecture }}
+          path: output/ScreenRecordCursor-${{ matrix.architecture }}
+
+  package:
+    needs: build
+    runs-on: macos-15
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: executable-*
+          path: executables
+          merge-multiple: true
+      - name: Create universal app
+        env:
+          APP_VERSION: ${{ github.ref_name }}
+          APP_BUILD: ${{ github.run_number }}
+        run: |
+          if [[ ! "$APP_VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Tag must use vMAJOR.MINOR.PATCH" >&2
+            exit 1
+          fi
+          APP_VERSION="${APP_VERSION#v}"
+          mkdir -p universal release
+          lipo -create \
+            executables/ScreenRecordCursor-arm64 \
+            executables/ScreenRecordCursor-x86_64 \
+            -output universal/ScreenRecordCursor
+          chmod +x universal/ScreenRecordCursor
+          SCREEN_RECORD_CURSOR_BINARY="$PWD/universal/ScreenRecordCursor" \
+            OUTPUT_DIR="$PWD/release" \
+            APP_VERSION="$APP_VERSION" \
+            APP_BUILD="$APP_BUILD" \
+            ./Scripts/build-app.sh
+          EXPECTED_APP_VERSION="$APP_VERSION" \
+            EXPECTED_APP_BUILD="$APP_BUILD" \
+            ./Scripts/verify-app.sh "$PWD/release/Screen Record Cursor.app"
+          architectures="$(lipo -archs "$PWD/release/Screen Record Cursor.app/Contents/MacOS/ScreenRecordCursor")"
+          test "$architectures" = "x86_64 arm64" || test "$architectures" = "arm64 x86_64"
+      - name: Package release
+        working-directory: release
+        run: |
+          ditto -c -k --sequesterRsrc --keepParent \
+            "Screen Record Cursor.app" \
+            "Screen-Record-Cursor-${GITHUB_REF_NAME}.zip"
+          shasum -a 256 "Screen-Record-Cursor-${GITHUB_REF_NAME}.zip" \
+            > "Screen-Record-Cursor-${GITHUB_REF_NAME}.sha256"
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            release/Screen-Record-Cursor-"$GITHUB_REF_NAME".zip \
+            release/Screen-Record-Cursor-"$GITHUB_REF_NAME".sha256 \
+            --generate-notes \
+            --title "Screen Record Cursor $GITHUB_REF_NAME"

@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  static:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate repository
+        run: ./Scripts/validate-static.sh
+
+  native:
+    strategy:
+      fail-fast: false
+      matrix:
+        runner:
+          - macos-15
+          - macos-15-intel
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test
+        run: swift test --parallel
+      - name: Build app
+        run: ./Scripts/build-app.sh
+      - name: Verify app
+        run: ./Scripts/verify-app.sh
+      - name: Package app artifact
+        run: |
+          ditto -c -k --sequesterRsrc --keepParent \
+            ".build/app/Screen Record Cursor.app" \
+            "ScreenRecordCursor-${{ matrix.runner }}.zip"
+      - name: Upload app
+        uses: actions/upload-artifact@v4
+        with:
+          name: ScreenRecordCursor-${{ matrix.runner }}
+          path: ScreenRecordCursor-${{ matrix.runner }}.zip
