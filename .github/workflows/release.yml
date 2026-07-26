@@ -47,7 +47,7 @@ jobs:
       - name: Resolve release version
         run: |
           if [[ "$GITHUB_REF_TYPE" == "tag" ]]; then
-            release_version="$RELEASE_VERSION"
+            release_version="$GITHUB_REF_NAME"
           else
             release_version="$(tr -d '[:space:]' < .github/alpha-release-version)"
           fi
