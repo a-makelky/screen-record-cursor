@@ -100,9 +100,13 @@ struct HotKeyShortcut: Equatable {
         return characters.uppercased()
     }
 
-    private static let safeWithoutModifier: Set<UInt32> = Set(
-        specialKeyLabels.keys
-    )
+    private static let safeWithoutModifier: Set<UInt32> = [
+        UInt32(kVK_F1), UInt32(kVK_F2), UInt32(kVK_F3), UInt32(kVK_F4),
+        UInt32(kVK_F5), UInt32(kVK_F6), UInt32(kVK_F7), UInt32(kVK_F8),
+        UInt32(kVK_F9), UInt32(kVK_F10), UInt32(kVK_F11), UInt32(kVK_F12),
+        UInt32(kVK_F13), UInt32(kVK_F14), UInt32(kVK_F15), UInt32(kVK_F16),
+        UInt32(kVK_F17), UInt32(kVK_F18), UInt32(kVK_F19), UInt32(kVK_F20)
+    ]
 
     private static let specialKeyLabels: [UInt32: String] = [
         UInt32(kVK_F1): "F1",
