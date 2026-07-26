@@ -1,22 +1,12 @@
+import AppKit
 import Carbon.HIToolbox
 import Foundation
 
-enum HotKeyModifier: String, CaseIterable, Identifiable {
+enum HotKeyModifier: String {
     case control
     case option
     case shift
     case command
-
-    var id: String { rawValue }
-
-    var label: String {
-        switch self {
-        case .control: "Control ⌃"
-        case .option: "Option ⌥"
-        case .shift: "Shift ⇧"
-        case .command: "Command ⌘"
-        }
-    }
 
     var symbol: String {
         switch self {
@@ -35,46 +25,130 @@ enum HotKeyModifier: String, CaseIterable, Identifiable {
         case .command: UInt32(cmdKey)
         }
     }
+
+    static func capture(from flags: NSEvent.ModifierFlags) throws -> HotKeyModifier? {
+        let active = [
+            (NSEvent.ModifierFlags.control, HotKeyModifier.control),
+            (.option, .option),
+            (.shift, .shift),
+            (.command, .command)
+        ].compactMap { flag, modifier in
+            flags.contains(flag) ? modifier : nil
+        }
+
+        guard active.count <= 1 else {
+            throw HotKeyCaptureError.tooManyKeys
+        }
+        return active.first
+    }
 }
 
-enum HotKeyKey: String, CaseIterable, Identifiable {
-    case semicolon
-    case slash
-    case backslash
-    case comma
-    case period
-    case c
-    case k
-    case p
-    case r
+struct HotKeyShortcut: Equatable {
+    let keyCode: UInt32
+    let modifier: HotKeyModifier?
+    let keyLabel: String
 
-    var id: String { rawValue }
+    static let defaultShortcut = HotKeyShortcut(
+        keyCode: UInt32(kVK_ANSI_Semicolon),
+        modifier: .control,
+        keyLabel: ";"
+    )
 
-    var label: String {
-        switch self {
-        case .semicolon: ";"
-        case .slash: "/"
-        case .backslash: "\\"
-        case .comma: ","
-        case .period: "."
-        case .c: "C"
-        case .k: "K"
-        case .p: "P"
-        case .r: "R"
-        }
+    var displayLabel: String {
+        "\(modifier?.symbol ?? "")\(keyLabel)"
     }
 
-    var carbonKeyCode: UInt32 {
+    var carbonModifiers: UInt32 {
+        modifier?.carbonMask ?? 0
+    }
+
+    static func capture(from event: NSEvent) throws -> HotKeyShortcut {
+        let modifier = try HotKeyModifier.capture(
+            from: event.modifierFlags.intersection(.deviceIndependentFlagsMask)
+        )
+        let keyCode = UInt32(event.keyCode)
+
+        guard let label = label(for: event) else {
+            throw HotKeyCaptureError.unsupportedKey
+        }
+
+        if modifier == nil && !safeWithoutModifier.contains(keyCode) {
+            throw HotKeyCaptureError.modifierRequired
+        }
+
+        return HotKeyShortcut(
+            keyCode: keyCode,
+            modifier: modifier,
+            keyLabel: label
+        )
+    }
+
+    private static func label(for event: NSEvent) -> String? {
+        let code = UInt32(event.keyCode)
+        if let label = specialKeyLabels[code] {
+            return label
+        }
+
+        guard let characters = event.charactersIgnoringModifiers,
+              !characters.isEmpty else {
+            return nil
+        }
+
+        if characters == " " {
+            return "Space"
+        }
+        return characters.uppercased()
+    }
+
+    private static let safeWithoutModifier: Set<UInt32> = Set(
+        specialKeyLabels.keys
+    )
+
+    private static let specialKeyLabels: [UInt32: String] = [
+        UInt32(kVK_F1): "F1",
+        UInt32(kVK_F2): "F2",
+        UInt32(kVK_F3): "F3",
+        UInt32(kVK_F4): "F4",
+        UInt32(kVK_F5): "F5",
+        UInt32(kVK_F6): "F6",
+        UInt32(kVK_F7): "F7",
+        UInt32(kVK_F8): "F8",
+        UInt32(kVK_F9): "F9",
+        UInt32(kVK_F10): "F10",
+        UInt32(kVK_F11): "F11",
+        UInt32(kVK_F12): "F12",
+        UInt32(kVK_F13): "F13",
+        UInt32(kVK_F14): "F14",
+        UInt32(kVK_F15): "F15",
+        UInt32(kVK_F16): "F16",
+        UInt32(kVK_F17): "F17",
+        UInt32(kVK_F18): "F18",
+        UInt32(kVK_F19): "F19",
+        UInt32(kVK_F20): "F20",
+        UInt32(kVK_LeftArrow): "←",
+        UInt32(kVK_RightArrow): "→",
+        UInt32(kVK_UpArrow): "↑",
+        UInt32(kVK_DownArrow): "↓",
+        UInt32(kVK_Home): "Home",
+        UInt32(kVK_End): "End",
+        UInt32(kVK_PageUp): "Page Up",
+        UInt32(kVK_PageDown): "Page Down"
+    ]
+}
+
+enum HotKeyCaptureError: LocalizedError {
+    case tooManyKeys
+    case modifierRequired
+    case unsupportedKey
+
+    var errorDescription: String? {
         switch self {
-        case .semicolon: UInt32(kVK_ANSI_Semicolon)
-        case .slash: UInt32(kVK_ANSI_Slash)
-        case .backslash: UInt32(kVK_ANSI_Backslash)
-        case .comma: UInt32(kVK_ANSI_Comma)
-        case .period: UInt32(kVK_ANSI_Period)
-        case .c: UInt32(kVK_ANSI_C)
-        case .k: UInt32(kVK_ANSI_K)
-        case .p: UInt32(kVK_ANSI_P)
-        case .r: UInt32(kVK_ANSI_R)
+        case .tooManyKeys:
+            "Use one key by itself or one modifier plus one key."
+        case .modifierRequired:
+            "Letters, numbers, and punctuation need one modifier key."
+        case .unsupportedKey:
+            "That key cannot be used as a global shortcut."
         }
     }
 }
@@ -115,7 +189,7 @@ final class GlobalHotKeyController {
     }
 
     @discardableResult
-    func register(modifier: HotKeyModifier, key: HotKeyKey) -> Bool {
+    func register(shortcut: HotKeyShortcut) -> Bool {
         unregister()
         guard eventHandlerReference != nil else { return false }
 
@@ -124,8 +198,8 @@ final class GlobalHotKeyController {
             id: Self.identifier
         )
         let result = RegisterEventHotKey(
-            key.carbonKeyCode,
-            modifier.carbonMask,
+            shortcut.keyCode,
+            shortcut.carbonModifiers,
             identifier,
             GetApplicationEventTarget(),
             0,
