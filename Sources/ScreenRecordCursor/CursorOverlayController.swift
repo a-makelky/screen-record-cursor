@@ -42,9 +42,7 @@ final class CursorOverlayController {
         panel.ignoresMouseEvents = true
         panel.hidesOnDeactivate = false
         panel.isReleasedWhenClosed = false
-        panel.level = NSWindow.Level(
-            rawValue: Int(CGWindowLevelForKey(.assistiveTechHighWindow))
-        )
+        panel.level = CursorOverlayPanel.aboveSystemCursorLevel
         panel.collectionBehavior = [
             .canJoinAllSpaces,
             .fullScreenAuxiliary,
@@ -136,6 +134,13 @@ final class CursorOverlayController {
 }
 
 final class CursorOverlayPanel: NSPanel {
+    /// The native pointer is composited at the cursor window level. Keeping the
+    /// replacement overlay one level above it prevents the small system pointer
+    /// from appearing nested inside the enlarged arrow.
+    static let aboveSystemCursorLevel = NSWindow.Level(
+        rawValue: Int(CGWindowLevelForKey(.cursorWindow)) + 1
+    )
+
     override var canBecomeKey: Bool { false }
     override var canBecomeMain: Bool { false }
 }

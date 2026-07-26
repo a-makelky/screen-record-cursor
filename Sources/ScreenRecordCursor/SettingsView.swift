@@ -137,7 +137,7 @@ struct SettingsView: View {
     private var motion: some View {
         VStack(alignment: .leading, spacing: 5) {
             Toggle("Kinetic cursor", isOn: $state.kineticEnabled)
-            Text("The arrow leans toward its movement while its hotspot stays exact.")
+            Text("The arrow swings into its movement while its hotspot stays exact.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }

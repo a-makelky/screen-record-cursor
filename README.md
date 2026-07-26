@@ -13,7 +13,7 @@ connection. It is a native Swift and AppKit app with no third-party dependencies
 - Includes 10 preset colors and a full macOS color picker
 - Shows a ripple, ring blink, both, or no effect on mouse-down
 - Plays a subtle, procedurally generated click sound
-- Offers an optional kinetic cursor that turns toward its motion
+- Offers an optional kinetic cursor whose tail swings behind its motion
 - Lives entirely in the menu bar and stores settings in local `UserDefaults`
 
 The ring and cursor overlay never receive mouse events. Your clicks, drags,
@@ -55,20 +55,21 @@ because the overlay is a separate transparent macOS window.
 
 ## How cursor enlargement works
 
-macOS does not provide a safe public API for one background app to replace the
-system cursor everywhere. This app draws an additional, enlarged vector cursor
-at the same hotspot. It avoids private APIs and avoids the crash risk of
-globally hiding the system cursor.
+The app draws a high-contrast vector cursor at the native hotspot without using
+private APIs or changing the system cursor. Its transparent overlay is placed
+one window level above macOS's documented cursor window level, and an opaque
+arrow silhouette covers the native pointer so the result reads as one cursor.
 
-macOS or the recorder can composite the native cursor above the overlay. If a
-recorder offers a native cursor visibility setting, turn that cursor off and let
-Screen Record Cursor provide the visible pointer.
+Some recorders independently add a native cursor after capturing the screen. If
+a finished recording still contains a second cursor, turn off that recorder's
+cursor setting and let Screen Record Cursor provide the visible pointer.
 
 ## Kinetic cursor
 
-Kinetic mode samples the real cursor position at about 60 Hz. Only the drawn
-arrow rotates. The ring and click hotspot remain fixed to the actual pointer
-position, so the visual effect does not make clicks inaccurate.
+Kinetic mode samples the real cursor position at about 60 Hz. The arrow rotates
+around its point until its tail trails opposite the movement direction. The ring
+and click hotspot remain fixed to the actual pointer position, so the stronger
+visual effect does not make clicks inaccurate.
 
 The motion model is isolated in `CursorCore` and covered by deterministic unit
 tests.
