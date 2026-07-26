@@ -64,7 +64,11 @@ cursor is rendered in a separate transparent window.
 - [ ] Every cursor color retains a high-contrast outline
 - [ ] All five click sounds preview and play during Recording mode
 - [ ] Default Control-semicolon shortcut toggles Recording mode from another app
-- [ ] Customized modifier and key persist after relaunch
+- [ ] Open shortcut field captures any supported one- or two-key combination
+- [ ] Plain typing keys without a modifier are rejected
+- [ ] More than one modifier is rejected
+- [ ] Escape cancels capture and Delete clears the shortcut
+- [ ] A recorded shortcut persists after relaunch
 - [ ] A conflicting shortcut is rejected without losing the previous shortcut
 
 Record the macOS version, Mac model, display arrangement, recorder version, and
