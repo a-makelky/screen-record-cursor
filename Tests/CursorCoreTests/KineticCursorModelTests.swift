@@ -109,12 +109,12 @@ final class KineticCursorModelTests: XCTestCase {
         XCTAssertEqual(frame.speed, 0, accuracy: 0.0001)
     }
 
-    func testKineticTiltStaysSubtle() {
+    func testFastRightwardMotionSwingsTailFullyBehindMomentum() {
         var model = KineticCursorModel()
         _ = model.update(position: .zero, timestamp: 1, enabled: true)
 
         var frame = CursorMotionFrame(rotationRadians: 0, speed: 0)
-        for index in 1...20 {
+        for index in 1...12 {
             frame = model.update(
                 position: CGPoint(x: CGFloat(index * 30), y: 0),
                 timestamp: 1 + Double(index) * 0.016,
@@ -122,7 +122,45 @@ final class KineticCursorModelTests: XCTestCase {
             )
         }
 
-        XCTAssertLessThanOrEqual(abs(frame.rotationRadians), 20 * .pi / 180 + 0.0001)
+        // The neutral arrow points northwest. Moving right should rotate it
+        // about -135 degrees so its tail trails to the left.
+        XCTAssertEqual(frame.rotationRadians, -3 * .pi / 4, accuracy: 0.08)
+    }
+
+    func testFastDownwardMotionProducesAnExaggeratedCounterclockwiseSwing() {
+        var model = KineticCursorModel()
+        _ = model.update(position: .zero, timestamp: 1, enabled: true)
+
+        var frame = CursorMotionFrame(rotationRadians: 0, speed: 0)
+        for index in 1...12 {
+            frame = model.update(
+                position: CGPoint(x: 0, y: CGFloat(index * -30)),
+                timestamp: 1 + Double(index) * 0.016,
+                enabled: true
+            )
+        }
+
+        // Moving down points the arrow down and leaves its tail above the
+        // hotspot, requiring roughly a +135 degree rotation from neutral.
+        XCTAssertEqual(frame.rotationRadians, 3 * .pi / 4, accuracy: 0.08)
+    }
+
+    func testConfiguredMaximumStillBoundsRotation() {
+        var model = KineticCursorModel(
+            configuration: .init(maximumTiltRadians: .pi / 2)
+        )
+        _ = model.update(position: .zero, timestamp: 1, enabled: true)
+
+        var frame = CursorMotionFrame(rotationRadians: 0, speed: 0)
+        for index in 1...12 {
+            frame = model.update(
+                position: CGPoint(x: CGFloat(index * 30), y: 0),
+                timestamp: 1 + Double(index) * 0.016,
+                enabled: true
+            )
+        }
+
+        XCTAssertLessThanOrEqual(abs(frame.rotationRadians), .pi / 2 + 0.0001)
     }
 
     func testResetClearsMotionState() {
