@@ -415,7 +415,11 @@ final class AppState: ObservableObject {
 
     private func saveHotKeyShortcut() {
         save(Int(hotKeyShortcut.keyCode), for: Keys.hotKeyKeyCode)
-        save(hotKeyShortcut.modifier?.rawValue, for: Keys.hotKeyModifier)
+        if let modifier = hotKeyShortcut.modifier {
+            save(modifier.rawValue, for: Keys.hotKeyModifier)
+        } else {
+            defaults.removeObject(forKey: Keys.hotKeyModifier)
+        }
         save(hotKeyShortcut.keyLabel, for: Keys.hotKeyKeyLabel)
     }
 
