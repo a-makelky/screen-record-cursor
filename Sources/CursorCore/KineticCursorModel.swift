@@ -14,8 +14,9 @@ public struct CursorMotionFrame: Equatable, Sendable {
 /// A deterministic, presentation-only motion model.
 ///
 /// The cursor hotspot always remains at the real pointer location. Kinetic mode
-/// rotates the drawn arrow toward its direction of travel, then smoothly returns
-/// it to the standard northwest heading after motion stops.
+/// rotates the drawn arrow around its fixed hotspot so its tail trails behind the
+/// direction of travel, then smoothly returns it to the standard northwest
+/// heading after motion stops.
 public struct KineticCursorModel: Sendable {
     public struct Configuration: Equatable, Sendable {
         public var activationSpeed: Double
@@ -27,13 +28,13 @@ public struct KineticCursorModel: Sendable {
         public var maximumTiltRadians: Double
 
         public init(
-            activationSpeed: Double = 35,
-            fullEffectSpeed: Double = 900,
-            velocityResponse: TimeInterval = 0.055,
-            responsiveness: Double = 18,
-            restResponsiveness: Double = 8,
+            activationSpeed: Double = 20,
+            fullEffectSpeed: Double = 420,
+            velocityResponse: TimeInterval = 0.025,
+            responsiveness: Double = 36,
+            restResponsiveness: Double = 7,
             baseHeadingRadians: Double = 3 * .pi / 4,
-            maximumTiltRadians: Double = 20 * .pi / 180
+            maximumTiltRadians: Double = .pi
         ) {
             self.activationSpeed = activationSpeed
             self.fullEffectSpeed = fullEffectSpeed
@@ -120,11 +121,8 @@ public struct KineticCursorModel: Sendable {
             )
             targetRotation = min(
                 configuration.maximumTiltRadians,
-                max(
-                    -configuration.maximumTiltRadians,
-                    directionalRotation * strength
-                )
-            )
+                max(-configuration.maximumTiltRadians, directionalRotation)
+            ) * strength
             response = configuration.responsiveness
         } else {
             targetRotation = 0
