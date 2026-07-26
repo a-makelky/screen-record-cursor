@@ -10,18 +10,94 @@ struct SettingsView: View {
     )
 
     var body: some View {
+        Group {
+            if state.hasCompletedOnboarding {
+                settings
+            } else {
+                onboarding
+            }
+        }
+        .padding(16)
+        .frame(width: 340)
+        .onAppear {
+            state.refreshLaunchAtLoginStatus()
+        }
+    }
+
+    private var settings: some View {
         VStack(alignment: .leading, spacing: 14) {
             header
+
+            if let statusMessage = state.statusMessage {
+                status(statusMessage)
+            }
+
             Divider()
             appearance
             Divider()
             clickFeedback
             Divider()
             motion
+            Divider()
+            general
             footer
         }
-        .padding(16)
-        .frame(width: 340)
+    }
+
+    private var onboarding: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Image(systemName: "cursorarrow.motionlines")
+                .font(.system(size: 34, weight: .semibold))
+                .foregroundStyle(Color.accentColor)
+                .accessibilityHidden(true)
+
+            VStack(alignment: .leading, spacing: 5) {
+                Text("A cursor made for recording")
+                    .font(.title3.weight(.semibold))
+                Text(
+                    """
+                    Screen Record Cursor replaces the tiny Mac pointer with one \
+                    larger cursor, clear click feedback, and optional kinetic motion.
+                    """
+                )
+                .font(.callout)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+            }
+
+            VStack(alignment: .leading, spacing: 9) {
+                onboardingStep(
+                    icon: "1.circle.fill",
+                    text: "Turn on Recording mode before you record."
+                )
+                onboardingStep(
+                    icon: "2.circle.fill",
+                    text: "Capture a full display or region so the overlay is included."
+                )
+                onboardingStep(
+                    icon: "3.circle.fill",
+                    text: "Turn Recording mode off to restore the normal cursor."
+                )
+            }
+
+            Text("Everything runs locally. No account, data collection, or screen capture.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+
+            Button {
+                state.completeOnboarding(startTest: true)
+            } label: {
+                Text("Start a 5-second cursor test")
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.borderedProminent)
+
+            Button("Open settings without testing") {
+                state.completeOnboarding(startTest: false)
+            }
+            .buttonStyle(.link)
+            .frame(maxWidth: .infinity)
+        }
     }
 
     private var header: some View {
@@ -36,7 +112,13 @@ struct SettingsView: View {
 
             Spacer()
 
-            Toggle("Recording mode", isOn: $state.isActive)
+            Toggle(
+                "Recording mode",
+                isOn: Binding(
+                    get: { state.isActive },
+                    set: { state.setRecordingMode($0) }
+                )
+            )
                 .labelsHidden()
                 .toggleStyle(.switch)
                 .help("Show or hide the enhanced recording cursor")
@@ -143,17 +225,103 @@ struct SettingsView: View {
         }
     }
 
-    private var footer: some View {
-        HStack {
-            Text("Local only · No AI · No network")
-                .font(.caption2)
-                .foregroundStyle(.tertiary)
-            Spacer()
-            Button("Quit") {
-                NSApp.terminate(nil)
+    private var general: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("General")
+                .font(.subheadline.weight(.semibold))
+
+            Toggle(
+                "Launch at Login",
+                isOn: Binding(
+                    get: { state.launchAtLoginEnabled },
+                    set: { state.setLaunchAtLogin($0) }
+                )
+            )
+
+            if let launchAtLoginMessage = state.launchAtLoginMessage {
+                Text(launchAtLoginMessage)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
-            .keyboardShortcut("q")
         }
+    }
+
+    private var footer: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text(versionLabel)
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+                Spacer()
+                Button("Support") {
+                    openSupport()
+                }
+                Button("Quit") {
+                    NSApp.terminate(nil)
+                }
+                .keyboardShortcut("q")
+            }
+
+            HStack {
+                Text("Local only · No AI · No network")
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+                Spacer()
+                Button("Reset Settings") {
+                    state.resetSettings()
+                }
+                .buttonStyle(.link)
+            }
+        }
+    }
+
+    private var versionLabel: String {
+        let version = Bundle.main.object(
+            forInfoDictionaryKey: "CFBundleShortVersionString"
+        ) as? String ?? "Development"
+        return "Version \(version)"
+    }
+
+    private func onboardingStep(icon: String, text: String) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 8) {
+            Image(systemName: icon)
+                .foregroundStyle(Color.accentColor)
+            Text(text)
+                .font(.callout)
+        }
+    }
+
+    private func status(_ message: String) -> some View {
+        HStack(alignment: .top, spacing: 8) {
+            Image(systemName: "info.circle.fill")
+                .foregroundStyle(Color.accentColor)
+            Text(message)
+                .font(.caption)
+                .fixedSize(horizontal: false, vertical: true)
+            Spacer()
+            Button {
+                state.dismissStatusMessage()
+            } label: {
+                Image(systemName: "xmark")
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Dismiss")
+        }
+        .padding(8)
+        .background(
+            Color.accentColor.opacity(0.1),
+            in: RoundedRectangle(cornerRadius: 8)
+        )
+    }
+
+    private func openSupport() {
+        guard let url = URL(
+            string: "https://github.com/a-makelky/screen-record-cursor/issues"
+        ) else {
+            return
+        }
+        NSWorkspace.shared.open(url)
     }
 
     private func slider(

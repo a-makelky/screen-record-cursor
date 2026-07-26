@@ -10,11 +10,15 @@ required=(
   "Sources/CursorCore/KineticCursorModel.swift"
   "Sources/ScreenRecordCursor/ScreenRecordCursorApp.swift"
   "Sources/ScreenRecordCursor/CursorOverlayController.swift"
+  "Sources/ScreenRecordCursor/LaunchAtLoginController.swift"
   "Sources/ScreenRecordCursor/NativeCursorVisibilityController.swift"
   "Sources/ScreenRecordCursor/GlobalClickMonitor.swift"
   "Tests/CursorCoreTests/KineticCursorModelTests.swift"
   "LICENSE"
   "README.md"
+  "TESTING.md"
+  "docs/PUBLIC_RELEASE.md"
+  "docs/EDUCATOR_ACCESS.md"
 )
 
 for path in "${required[@]}"; do

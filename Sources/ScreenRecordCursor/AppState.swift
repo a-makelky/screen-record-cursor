@@ -19,12 +19,11 @@ final class AppState: ObservableObject {
         "#FFFFFF"  // white
     ]
 
-    @Published var isActive = false {
-        didSet {
-            guard oldValue != isActive else { return }
-            isActive ? overlayController.start() : overlayController.stop()
-        }
-    }
+    @Published private(set) var isActive = false
+    @Published private(set) var statusMessage: String?
+    @Published private(set) var hasCompletedOnboarding: Bool
+    @Published private(set) var launchAtLoginEnabled = false
+    @Published private(set) var launchAtLoginMessage: String?
 
     @Published var colorHex: String {
         didSet {
@@ -81,6 +80,7 @@ final class AppState: ObservableObject {
     }
 
     private let defaults = UserDefaults.standard
+    private let launchAtLoginController = LaunchAtLoginController()
     private var overlayController: CursorOverlayController!
 
     private enum Keys {
@@ -92,6 +92,7 @@ final class AppState: ObservableObject {
         static let soundEnabled = "soundEnabled"
         static let soundVolume = "soundVolume"
         static let kineticEnabled = "kineticEnabled"
+        static let hasCompletedOnboarding = "hasCompletedOnboarding"
     }
 
     private init() {
@@ -116,6 +117,9 @@ final class AppState: ObservableObject {
         soundEnabled = defaults.bool(forKey: Keys.soundEnabled)
         soundVolume = defaults.double(forKey: Keys.soundVolume)
         kineticEnabled = defaults.bool(forKey: Keys.kineticEnabled)
+        hasCompletedOnboarding = defaults.bool(
+            forKey: Keys.hasCompletedOnboarding
+        )
 
         overlayController = CursorOverlayController(
             settingsProvider: { [weak self] in
@@ -133,6 +137,8 @@ final class AppState: ObservableObject {
                 return Float(self.soundVolume)
             }
         )
+
+        refreshLaunchAtLoginStatus()
     }
 
     var visualSettings: CursorVisualSettings {
@@ -146,12 +152,115 @@ final class AppState: ObservableObject {
         )
     }
 
-    func stopForTermination() {
-        if isActive {
-            isActive = false
+    func setRecordingMode(_ enabled: Bool) {
+        guard enabled != isActive else { return }
+
+        if enabled {
+            statusMessage = nil
+            guard overlayController.start() else {
+                statusMessage = """
+                Recording mode could not hide the native macOS cursor. \
+                Your normal cursor was restored.
+                """
+                return
+            }
+            isActive = true
         } else {
             overlayController.stop()
+            isActive = false
         }
+    }
+
+    func toggleRecordingMode() {
+        setRecordingMode(!isActive)
+    }
+
+    func completeOnboarding(startTest: Bool) {
+        hasCompletedOnboarding = true
+        save(true, for: Keys.hasCompletedOnboarding)
+
+        if startTest {
+            setRecordingMode(true)
+        }
+    }
+
+    func dismissStatusMessage() {
+        statusMessage = nil
+    }
+
+    func setLaunchAtLogin(_ enabled: Bool) {
+        launchAtLoginMessage = nil
+
+        do {
+            try launchAtLoginController.setEnabled(enabled)
+        } catch {
+            launchAtLoginMessage = """
+            macOS could not update Launch at Login. Move the app to Applications \
+            and try again.
+            """
+        }
+
+        refreshLaunchAtLoginStatus()
+    }
+
+    func refreshLaunchAtLoginStatus() {
+        switch launchAtLoginController.state {
+        case .enabled:
+            launchAtLoginEnabled = true
+            launchAtLoginMessage = nil
+        case .disabled:
+            launchAtLoginEnabled = false
+        case .requiresApproval:
+            launchAtLoginEnabled = false
+            launchAtLoginMessage = """
+            Approve Screen Record Cursor in System Settings → General → Login Items.
+            """
+        case .unavailable:
+            launchAtLoginEnabled = false
+            launchAtLoginMessage = """
+            Launch at Login is available after the app is installed in Applications.
+            """
+        }
+    }
+
+    func resetSettings() {
+        colorHex = "#FF3B30"
+        ringDiameter = 44
+        ringThickness = 4
+        cursorScale = 1.65
+        clickEffect = .ripple
+        soundEnabled = true
+        soundVolume = 0.28
+        kineticEnabled = false
+        statusMessage = "Appearance, motion, and click settings were reset."
+    }
+
+    func stopForSystemTransition() {
+        stopForSafety(
+            message: "Recording mode was turned off to restore your cursor before sleep or user switching."
+        )
+    }
+
+    func stopForDisplayChange() {
+        stopForSafety(
+            message: "Recording mode was turned off after the display configuration changed."
+        )
+    }
+
+    func stopForTermination() {
+        overlayController.stop()
+        isActive = false
+    }
+
+    private func stopForSafety(message: String) {
+        guard isActive else {
+            overlayController.stop()
+            return
+        }
+
+        overlayController.stop()
+        isActive = false
+        statusMessage = message
     }
 
     private func save(_ value: Any, for key: String) {

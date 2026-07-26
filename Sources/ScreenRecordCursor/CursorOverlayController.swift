@@ -24,8 +24,9 @@ final class CursorOverlayController {
         self.clickSoundProvider = clickSoundProvider
     }
 
-    func start() {
-        guard panel == nil else { return }
+    @discardableResult
+    func start() -> Bool {
+        guard panel == nil else { return true }
 
         let view = CursorOverlayView(frame: CGRect(origin: .zero, size: overlaySize))
         view.settings = settingsProvider()
@@ -57,7 +58,11 @@ final class CursorOverlayController {
         kineticModel.reset()
         updateFrame()
         panel.orderFrontRegardless()
-        nativeCursorVisibility.hideForRecording()
+
+        guard nativeCursorVisibility.hideForRecording() else {
+            stop()
+            return false
+        }
 
         let monitor = GlobalClickMonitor { [weak self] in
             self?.handleClick()
@@ -76,6 +81,7 @@ final class CursorOverlayController {
         }
         frameTimer = timer
         timer.resume()
+        return true
     }
 
     func stop() {
