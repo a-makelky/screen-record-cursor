@@ -11,6 +11,7 @@ required=(
   "Sources/ScreenRecordCursor/ScreenRecordCursorApp.swift"
   "Sources/ScreenRecordCursor/CursorOverlayController.swift"
   "Sources/ScreenRecordCursor/GlobalHotKeyController.swift"
+  "Sources/ScreenRecordCursor/ShortcutRecorderView.swift"
   "Sources/ScreenRecordCursor/LaunchAtLoginController.swift"
   "Sources/ScreenRecordCursor/NativeCursorVisibilityController.swift"
   "Sources/ScreenRecordCursor/GlobalClickMonitor.swift"
