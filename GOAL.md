@@ -17,7 +17,7 @@ paid runtime dependencies.
 - [x] Adjustable cursor size, ring size, and ring weight
 - [x] Ripple click effect
 - [x] Blink click effect
-- [x] Optional procedurally generated click sound and volume control
+- [x] Optional bundled click sounds and volume control
 - [x] Five selectable local click sounds
 - [x] Optional kinetic cursor driven by a deterministic motion model
 - [x] No AI, account, analytics, network connection, or third-party dependency

@@ -21,6 +21,12 @@ required=(
   "TESTING.md"
   "docs/PUBLIC_RELEASE.md"
   "docs/EDUCATOR_ACCESS.md"
+  "docs/SOUND_ASSETS.md"
+  "Resources/Sounds/mouse-click.wav"
+  "Resources/Sounds/mouse-pop.wav"
+  "Resources/Sounds/plop-click.wav"
+  "Resources/Sounds/spacebar.wav"
+  "Resources/Sounds/typewriter.wav"
 )
 
 for path in "${required[@]}"; do
@@ -78,6 +84,11 @@ fi
 
 if grep -q '\.package(' Package.swift; then
   echo "External Swift package dependencies are not allowed." >&2
+  exit 1
+fi
+
+if grep -R -nE 'makeClickWAV|deterministicNoise' Sources/ScreenRecordCursor; then
+  echo "Click sounds must come from the bundled WAV resources." >&2
   exit 1
 fi
 

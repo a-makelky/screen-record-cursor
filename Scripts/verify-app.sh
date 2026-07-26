@@ -2,13 +2,17 @@
 set -euo pipefail
 
 project_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-app_path="${1:-"$project_root/.build/app/Screen Record Cursor.app"}"
+app_path="${1:-"$project_root/.build/app/Screen Recording Cursor.app"}"
 plist="$app_path/Contents/Info.plist"
 binary="$app_path/Contents/MacOS/ScreenRecordCursor"
 
 test -d "$app_path"
 test -f "$plist"
 test -x "$binary"
+
+for sound in mouse-click mouse-pop plop-click spacebar typewriter; do
+  test -f "$app_path/Contents/Resources/Sounds/$sound.wav"
+done
 
 plutil -lint "$plist"
 plist_value() {

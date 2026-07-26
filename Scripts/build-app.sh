@@ -3,7 +3,7 @@ set -euo pipefail
 
 project_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 configuration="${CONFIGURATION:-release}"
-app_name="Screen Record Cursor.app"
+app_name="Screen Recording Cursor.app"
 output_root="${OUTPUT_DIR:-"$project_root/.build/app"}"
 app_path="$output_root/$app_name"
 
@@ -29,6 +29,7 @@ rm -rf "$app_path"
 mkdir -p "$app_path/Contents/MacOS" "$app_path/Contents/Resources"
 cp "$binary_path" "$app_path/Contents/MacOS/ScreenRecordCursor"
 cp "$project_root/Resources/Info.plist" "$app_path/Contents/Info.plist"
+cp -R "$project_root/Resources/Sounds" "$app_path/Contents/Resources/Sounds"
 
 if [[ -n "${APP_VERSION:-}" ]]; then
   /usr/libexec/PlistBuddy \

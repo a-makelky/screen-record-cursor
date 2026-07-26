@@ -12,8 +12,9 @@ verify: app
 install: verify
 	mkdir -p "$(HOME)/Applications"
 	rm -rf "$(HOME)/Applications/Screen Record Cursor.app"
-	cp -R ".build/app/Screen Record Cursor.app" "$(HOME)/Applications/"
-	@echo "Installed to $(HOME)/Applications/Screen Record Cursor.app"
+	rm -rf "$(HOME)/Applications/Screen Recording Cursor.app"
+	cp -R ".build/app/Screen Recording Cursor.app" "$(HOME)/Applications/"
+	@echo "Installed to $(HOME)/Applications/Screen Recording Cursor.app"
 
 validate:
 	./Scripts/validate-static.sh

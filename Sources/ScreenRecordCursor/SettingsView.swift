@@ -74,7 +74,7 @@ struct SettingsView: View {
                     .font(.title3.weight(.semibold))
                 Text(
                     """
-                    Screen Record Cursor replaces the tiny Mac pointer with one \
+                    Screen Recording Cursor replaces the tiny Mac pointer with one \
                     larger cursor, clear click feedback, and optional kinetic motion.
                     """
                 )
@@ -121,7 +121,7 @@ struct SettingsView: View {
     private var header: some View {
         HStack(spacing: 12) {
             VStack(alignment: .leading, spacing: 3) {
-                Text("Screen Record Cursor")
+                Text("Screen Recording Cursor")
                     .font(.headline)
                 Text(state.isActive ? "Recording mode is on" : "Ready when you are")
                     .font(.caption)
@@ -182,19 +182,10 @@ struct SettingsView: View {
                     }
                 }
 
-                ColorPicker(
-                    "Custom ring color",
-                    selection: Binding(
-                        get: {
-                            Color(
-                                nsColor: NSColor(hex: state.colorHex) ?? .systemRed
-                            )
-                        },
-                        set: { color in
-                            state.colorHex = NSColor(color).hexString
-                        }
-                    ),
-                    supportsOpacity: false
+                customColorButton(
+                    title: "Custom ring color",
+                    hex: $state.colorHex,
+                    fallback: .systemRed
                 )
 
                 slider(
@@ -212,19 +203,41 @@ struct SettingsView: View {
                 )
             }
 
-            ColorPicker(
-                "Cursor color",
-                selection: Binding(
-                    get: {
-                        Color(
-                            nsColor: NSColor(hex: state.cursorColorHex) ?? .black
-                        )
-                    },
-                    set: { color in
-                        state.cursorColorHex = NSColor(color).hexString
+            Text("Cursor color")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+
+            LazyVGrid(columns: grid, spacing: 8) {
+                ForEach(AppState.cursorColors, id: \.self) { hex in
+                    Button {
+                        state.cursorColorHex = hex
+                    } label: {
+                        Circle()
+                            .fill(
+                                Color(
+                                    nsColor: NSColor(hex: hex) ?? .black
+                                )
+                            )
+                            .overlay {
+                                Circle()
+                                    .strokeBorder(
+                                        Color.primary.opacity(
+                                            state.cursorColorHex == hex ? 0.9 : 0.16
+                                        ),
+                                        lineWidth: state.cursorColorHex == hex ? 3 : 1
+                                    )
+                            }
+                            .frame(width: 28, height: 28)
                     }
-                ),
-                supportsOpacity: false
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Use \(hex) for the cursor")
+                }
+            }
+
+            customColorButton(
+                title: "Custom cursor color",
+                hex: $state.cursorColorHex,
+                fallback: .black
             )
 
             slider(
@@ -424,6 +437,40 @@ struct SettingsView: View {
         NSWorkspace.shared.open(url)
     }
 
+    private func customColorButton(
+        title: String,
+        hex: Binding<String>,
+        fallback: NSColor
+    ) -> some View {
+        Button {
+            ColorPanelCoordinator.shared.present(
+                title: title,
+                color: NSColor(hex: hex.wrappedValue) ?? fallback
+            ) { color in
+                hex.wrappedValue = color.hexString
+            }
+        } label: {
+            HStack {
+                Text(title)
+                Spacer()
+                RoundedRectangle(cornerRadius: 7)
+                    .fill(
+                        Color(
+                            nsColor: NSColor(hex: hex.wrappedValue) ?? fallback
+                        )
+                    )
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 7)
+                            .strokeBorder(Color.primary.opacity(0.28), lineWidth: 1)
+                    }
+                    .frame(width: 44, height: 22)
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityHint("Opens the macOS color picker")
+    }
+
     private func slider(
         title: String,
         value: Binding<Double>,
@@ -441,5 +488,35 @@ struct SettingsView: View {
             }
             Slider(value: value, in: range)
         }
+    }
+}
+
+@MainActor
+private final class ColorPanelCoordinator: NSObject {
+    static let shared = ColorPanelCoordinator()
+
+    private var onChange: ((NSColor) -> Void)?
+
+    func present(
+        title: String,
+        color: NSColor,
+        onChange: @escaping (NSColor) -> Void
+    ) {
+        self.onChange = onChange
+
+        let panel = NSColorPanel.shared
+        panel.title = title
+        panel.color = color
+        panel.isContinuous = true
+        panel.setTarget(self)
+        panel.setAction(#selector(colorDidChange(_:)))
+
+        NSApp.activate(ignoringOtherApps: true)
+        panel.makeKeyAndOrderFront(nil)
+    }
+
+    @objc
+    private func colorDidChange(_ sender: NSColorPanel) {
+        onChange?(sender.color)
     }
 }

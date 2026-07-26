@@ -31,7 +31,7 @@ final class NativeCursorVisibilityController {
         guard enableBackgroundCursorControl() else {
             wantsCursorHidden = false
             NSLog(
-                "Screen Record Cursor could not enable background cursor control; "
+                "Screen Recording Cursor could not enable background cursor control; "
                     + "the native cursor will remain visible."
             )
             return false
@@ -40,7 +40,7 @@ final class NativeCursorVisibilityController {
         guard replaceHideRequest() else {
             wantsCursorHidden = false
             NSLog(
-                "Screen Record Cursor could not hide the native cursor; "
+                "Screen Recording Cursor could not hide the native cursor; "
                     + "Recording mode was not started."
             )
             return false

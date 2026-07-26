@@ -19,6 +19,19 @@ final class AppState: ObservableObject {
         "#FFFFFF"  // white
     ]
 
+    static let cursorColors = [
+        "#000000", // black
+        "#FFFFFF", // white
+        "#FFCC00", // yellow
+        "#FF3B30", // red
+        "#007AFF", // blue
+        "#34C759", // green
+        "#AF52DE", // purple
+        "#FF2D55", // pink
+        "#FF9500", // orange
+        "#00C7BE"  // teal
+    ]
+
     @Published private(set) var isActive = false
     @Published private(set) var statusMessage: String?
     @Published private(set) var hasCompletedOnboarding: Bool
@@ -140,7 +153,7 @@ final class AppState: ObservableObject {
             Keys.clickEffect: ClickEffect.ripple.rawValue,
             Keys.soundEnabled: true,
             Keys.soundVolume: 0.28,
-            Keys.soundStyle: ClickSoundStyle.systemTick.rawValue,
+            Keys.soundStyle: ClickSoundStyle.mouseClick.rawValue,
             Keys.kineticEnabled: false,
             Keys.hotKeyEnabled: true,
             Keys.hotKeyModifier: HotKeyModifier.control.rawValue,
@@ -163,7 +176,7 @@ final class AppState: ObservableObject {
         soundVolume = defaults.double(forKey: Keys.soundVolume)
         soundStyle = ClickSoundStyle(
             rawValue: defaults.string(forKey: Keys.soundStyle) ?? ""
-        ) ?? .systemTick
+        ) ?? .mouseClick
         kineticEnabled = defaults.bool(forKey: Keys.kineticEnabled)
         hasCompletedOnboarding = defaults.bool(
             forKey: Keys.hasCompletedOnboarding
@@ -276,7 +289,7 @@ final class AppState: ObservableObject {
         case .requiresApproval:
             launchAtLoginEnabled = false
             launchAtLoginMessage = """
-            Approve Screen Record Cursor in System Settings → General → Login Items.
+            Approve Screen Recording Cursor in System Settings → General → Login Items.
             """
         case .unavailable:
             launchAtLoginEnabled = false
@@ -355,7 +368,7 @@ final class AppState: ObservableObject {
         clickEffect = .ripple
         soundEnabled = true
         soundVolume = 0.28
-        soundStyle = .systemTick
+        soundStyle = .mouseClick
         kineticEnabled = false
         hotKeyShortcut = .defaultShortcut
         saveHotKeyShortcut()

@@ -1,6 +1,6 @@
 # Educator Access
 
-Screen Record Cursor Educator Access provides a free personal-use copy to
+Screen Recording Cursor Educator Access provides a free personal-use copy to
 active employees of public K–12 schools and public colleges.
 
 ## Version 1

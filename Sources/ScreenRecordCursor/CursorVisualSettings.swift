@@ -19,21 +19,31 @@ enum ClickEffect: String, CaseIterable, Identifiable {
 }
 
 enum ClickSoundStyle: String, CaseIterable, Identifiable {
-    case systemTick
-    case softTap
-    case mechanical
+    case mouseClick
+    case plopClick
     case typewriter
-    case bubblePop
+    case spacebar
+    case mousePop
 
     var id: String { rawValue }
 
     var label: String {
         switch self {
-        case .systemTick: "System Tick"
-        case .softTap: "Soft Tap"
-        case .mechanical: "Mechanical Click"
+        case .mouseClick: "Mouse Click"
+        case .plopClick: "Plop Click"
         case .typewriter: "Typewriter"
-        case .bubblePop: "Bubble Pop"
+        case .spacebar: "Space Bar"
+        case .mousePop: "Mouse Pop"
+        }
+    }
+
+    var resourceName: String {
+        switch self {
+        case .mouseClick: "mouse-click"
+        case .plopClick: "plop-click"
+        case .typewriter: "typewriter"
+        case .spacebar: "spacebar"
+        case .mousePop: "mouse-pop"
         }
     }
 }
