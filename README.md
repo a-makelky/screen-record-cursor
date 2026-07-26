@@ -26,6 +26,20 @@ scrolling, and gestures continue to reach the app underneath.
 - A screen recorder configured for full-display or region capture
 - System or computer audio capture enabled if you want the click sound recorded
 
+## Install the alpha
+
+1. Open the repository's [Releases](https://github.com/a-makelky/screen-record-cursor/releases)
+   page and choose the newest alpha release.
+2. Download the file named `Screen-Record-Cursor-*.zip` under **Assets**. Do not
+   download GitHub's automatically generated **Source code** archives.
+3. Unzip the download and move **Screen Record Cursor.app** to Applications.
+4. Control-click the app, choose **Open**, and confirm the first launch.
+5. Use the menu-bar icon to turn on **Recording mode**.
+
+Alpha builds are ad-hoc signed but not yet notarized. If macOS blocks the first
+launch, open **System Settings → Privacy & Security** and choose **Open Anyway**.
+Do not disable Gatekeeper.
+
 ## Build and install
 
 The project uses Swift Package Manager and does not require an Xcode project.
@@ -110,7 +124,9 @@ make verify
 ```
 
 GitHub Actions compiles and tests the app on Apple Silicon and Intel macOS
-runners. Tags matching `v*.*.*` create an ad-hoc signed universal app release.
+runners. Stable tags such as `v1.0.0` create a release. Prerelease tags such as
+`v0.1.0-alpha.1` create an alpha prerelease. Both contain one ad-hoc signed
+universal app for Apple Silicon and Intel Macs.
 
 Ad-hoc signing does not provide Apple notarization. On a downloaded development
 release, Control-click the app and choose **Open**, or use the **Open Anyway**
