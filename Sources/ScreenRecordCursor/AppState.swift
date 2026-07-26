@@ -25,8 +25,7 @@ final class AppState: ObservableObject {
     @Published private(set) var launchAtLoginEnabled = false
     @Published private(set) var launchAtLoginMessage: String?
     @Published private(set) var hotKeyEnabled: Bool
-    @Published private(set) var hotKeyModifier: HotKeyModifier
-    @Published private(set) var hotKeyKey: HotKeyKey
+    @Published private(set) var hotKeyShortcut: HotKeyShortcut
     @Published private(set) var hotKeyMessage: String?
 
     @Published var colorHex: String {
@@ -126,7 +125,8 @@ final class AppState: ObservableObject {
         static let hasCompletedOnboarding = "hasCompletedOnboarding"
         static let hotKeyEnabled = "hotKeyEnabled"
         static let hotKeyModifier = "hotKeyModifier"
-        static let hotKeyKey = "hotKeyKey"
+        static let hotKeyKeyCode = "hotKeyKeyCode"
+        static let hotKeyKeyLabel = "hotKeyKeyLabel"
     }
 
     private init() {
@@ -144,7 +144,8 @@ final class AppState: ObservableObject {
             Keys.kineticEnabled: false,
             Keys.hotKeyEnabled: true,
             Keys.hotKeyModifier: HotKeyModifier.control.rawValue,
-            Keys.hotKeyKey: HotKeyKey.semicolon.rawValue
+            Keys.hotKeyKeyCode: Int(HotKeyShortcut.defaultShortcut.keyCode),
+            Keys.hotKeyKeyLabel: HotKeyShortcut.defaultShortcut.keyLabel
         ])
 
         colorHex = defaults.string(forKey: Keys.colorHex) ?? "#FF3B30"
@@ -168,12 +169,12 @@ final class AppState: ObservableObject {
             forKey: Keys.hasCompletedOnboarding
         )
         hotKeyEnabled = defaults.bool(forKey: Keys.hotKeyEnabled)
-        hotKeyModifier = HotKeyModifier(
-            rawValue: defaults.string(forKey: Keys.hotKeyModifier) ?? ""
-        ) ?? .control
-        hotKeyKey = HotKeyKey(
-            rawValue: defaults.string(forKey: Keys.hotKeyKey) ?? ""
-        ) ?? .semicolon
+        hotKeyShortcut = HotKeyShortcut(
+            keyCode: UInt32(defaults.integer(forKey: Keys.hotKeyKeyCode)),
+            modifier: defaults.string(forKey: Keys.hotKeyModifier)
+                .flatMap(HotKeyModifier.init(rawValue:)),
+            keyLabel: defaults.string(forKey: Keys.hotKeyKeyLabel) ?? ";"
+        )
 
         overlayController = CursorOverlayController(
             settingsProvider: { [weak self] in
@@ -286,22 +287,19 @@ final class AppState: ObservableObject {
     }
 
     var hotKeyLabel: String {
-        "\(hotKeyModifier.symbol)\(hotKeyKey.label)"
+        hotKeyShortcut.displayLabel
     }
 
     func setHotKeyEnabled(_ enabled: Bool) {
         hotKeyMessage = nil
 
         if enabled {
-            guard globalHotKeyController.register(
-                modifier: hotKeyModifier,
-                key: hotKeyKey
-            ) else {
+            guard globalHotKeyController.register(shortcut: hotKeyShortcut) else {
                 hotKeyEnabled = false
                 save(false, for: Keys.hotKeyEnabled)
                 hotKeyMessage = """
                 \(hotKeyLabel) is already used by macOS or another app. \
-                Choose a different shortcut.
+                Record a different shortcut.
                 """
                 return
             }
@@ -313,12 +311,38 @@ final class AppState: ObservableObject {
         save(enabled, for: Keys.hotKeyEnabled)
     }
 
-    func setHotKeyModifier(_ modifier: HotKeyModifier) {
-        updateHotKey(modifier: modifier, key: hotKeyKey)
+    func setHotKeyShortcut(_ shortcut: HotKeyShortcut) {
+        guard shortcut != hotKeyShortcut else {
+            hotKeyMessage = nil
+            return
+        }
+
+        let previousShortcut = hotKeyShortcut
+        hotKeyMessage = nil
+
+        if hotKeyEnabled {
+            guard globalHotKeyController.register(shortcut: shortcut) else {
+                _ = globalHotKeyController.register(shortcut: previousShortcut)
+                hotKeyMessage = """
+                \(shortcut.displayLabel) is already used by macOS or another app.
+                """
+                return
+            }
+        }
+
+        hotKeyShortcut = shortcut
+        saveHotKeyShortcut()
     }
 
-    func setHotKeyKey(_ key: HotKeyKey) {
-        updateHotKey(modifier: hotKeyModifier, key: key)
+    func clearHotKey() {
+        globalHotKeyController.unregister()
+        hotKeyEnabled = false
+        save(false, for: Keys.hotKeyEnabled)
+        hotKeyMessage = "Shortcut cleared. Turn Global shortcut on to record another."
+    }
+
+    func setHotKeyMessage(_ message: String?) {
+        hotKeyMessage = message
     }
 
     func resetSettings() {
@@ -333,7 +357,12 @@ final class AppState: ObservableObject {
         soundVolume = 0.28
         soundStyle = .systemTick
         kineticEnabled = false
-        statusMessage = "Appearance, motion, and click settings were reset."
+        hotKeyShortcut = .defaultShortcut
+        saveHotKeyShortcut()
+        if hotKeyEnabled {
+            _ = globalHotKeyController.register(shortcut: hotKeyShortcut)
+        }
+        statusMessage = "Appearance, motion, click, and shortcut settings were reset."
     }
 
     func previewClickSound() {
@@ -374,45 +403,20 @@ final class AppState: ObservableObject {
     private func configureGlobalHotKey() {
         guard hotKeyEnabled else { return }
 
-        if !globalHotKeyController.register(
-            modifier: hotKeyModifier,
-            key: hotKeyKey
-        ) {
+        if !globalHotKeyController.register(shortcut: hotKeyShortcut) {
             hotKeyEnabled = false
             save(false, for: Keys.hotKeyEnabled)
             hotKeyMessage = """
             \(hotKeyLabel) is already used by macOS or another app. \
-            Choose a different shortcut.
+            Record a different shortcut.
             """
         }
     }
 
-    private func updateHotKey(modifier: HotKeyModifier, key: HotKeyKey) {
-        let previousModifier = hotKeyModifier
-        let previousKey = hotKeyKey
-        hotKeyMessage = nil
-
-        if hotKeyEnabled {
-            guard globalHotKeyController.register(
-                modifier: modifier,
-                key: key
-            ) else {
-                _ = globalHotKeyController.register(
-                    modifier: previousModifier,
-                    key: previousKey
-                )
-                hotKeyMessage = """
-                \(modifier.symbol)\(key.label) is already used by macOS or \
-                another app.
-                """
-                return
-            }
-        }
-
-        hotKeyModifier = modifier
-        hotKeyKey = key
-        save(modifier.rawValue, for: Keys.hotKeyModifier)
-        save(key.rawValue, for: Keys.hotKeyKey)
+    private func saveHotKeyShortcut() {
+        save(Int(hotKeyShortcut.keyCode), for: Keys.hotKeyKeyCode)
+        save(hotKeyShortcut.modifier?.rawValue, for: Keys.hotKeyModifier)
+        save(hotKeyShortcut.keyLabel, for: Keys.hotKeyKeyLabel)
     }
 
     private func save(_ value: Any, for key: String) {
