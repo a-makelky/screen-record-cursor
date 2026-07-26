@@ -5,7 +5,8 @@ import CursorCore
 final class CursorOverlayController {
     private let overlaySize = CGSize(width: 256, height: 256)
     private let settingsProvider: @MainActor () -> CursorVisualSettings
-    private let clickSoundProvider: @MainActor () -> Float?
+    private let clickSoundProvider:
+        @MainActor () -> (style: ClickSoundStyle, volume: Float)?
 
     private var panel: CursorOverlayPanel?
     private var overlayView: CursorOverlayView?
@@ -18,7 +19,8 @@ final class CursorOverlayController {
 
     init(
         settingsProvider: @escaping @MainActor () -> CursorVisualSettings,
-        clickSoundProvider: @escaping @MainActor () -> Float?
+        clickSoundProvider:
+            @escaping @MainActor () -> (style: ClickSoundStyle, volume: Float)?
     ) {
         self.settingsProvider = settingsProvider
         self.clickSoundProvider = clickSoundProvider
@@ -104,6 +106,10 @@ final class CursorOverlayController {
         overlayView?.settings = settingsProvider()
     }
 
+    func previewClickSound(style: ClickSoundStyle, volume: Float) {
+        soundPlayer.play(style: style, volume: volume)
+    }
+
     private func updateFrame() {
         guard let panel, let overlayView else { return }
 
@@ -136,8 +142,8 @@ final class CursorOverlayController {
         let timestamp = ProcessInfo.processInfo.systemUptime
         overlayView?.registerClick(at: timestamp)
 
-        if let volume = clickSoundProvider() {
-            soundPlayer.play(volume: volume)
+        if let sound = clickSoundProvider() {
+            soundPlayer.play(style: sound.style, volume: sound.volume)
         }
     }
 }

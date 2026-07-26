@@ -60,6 +60,12 @@ cursor is rendered in a separate transparent window.
 - [ ] Reset Settings restores the documented defaults
 - [ ] Support opens the repository issue page
 - [ ] Visual and sound settings persist after relaunch
+- [ ] Ring-off mode leaves only the enlarged cursor and optional click sound
+- [ ] Every cursor color retains a high-contrast outline
+- [ ] All five click sounds preview and play during Recording mode
+- [ ] Default Control-semicolon shortcut toggles Recording mode from another app
+- [ ] Customized modifier and key persist after relaunch
+- [ ] A conflicting shortcut is rejected without losing the previous shortcut
 
 Record the macOS version, Mac model, display arrangement, recorder version, and
 result in the release pull request.

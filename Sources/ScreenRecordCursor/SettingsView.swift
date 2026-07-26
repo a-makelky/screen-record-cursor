@@ -12,7 +12,10 @@ struct SettingsView: View {
     var body: some View {
         Group {
             if state.hasCompletedOnboarding {
-                settings
+                ScrollView {
+                    settings
+                }
+                .frame(maxHeight: settingsMaximumHeight)
             } else {
                 onboarding
             }
@@ -22,6 +25,11 @@ struct SettingsView: View {
         .onAppear {
             state.refreshLaunchAtLoginStatus()
         }
+    }
+
+    private var settingsMaximumHeight: CGFloat {
+        let visibleHeight = NSScreen.main?.visibleFrame.height ?? 760
+        return max(420, min(760, visibleHeight - 48))
     }
 
     private var settings: some View {
@@ -130,39 +138,80 @@ struct SettingsView: View {
             Text("Appearance")
                 .font(.subheadline.weight(.semibold))
 
-            LazyVGrid(columns: grid, spacing: 8) {
-                ForEach(AppState.defaultColors, id: \.self) { hex in
-                    Button {
-                        state.colorHex = hex
-                    } label: {
-                        Circle()
-                            .fill(Color(nsColor: NSColor(hex: hex) ?? .systemRed))
-                            .overlay {
-                                Circle()
-                                    .strokeBorder(
-                                        Color.primary.opacity(
-                                            state.colorHex == hex ? 0.9 : 0.16
-                                        ),
-                                        lineWidth: state.colorHex == hex ? 3 : 1
+            Toggle("Show ring", isOn: $state.ringEnabled)
+
+            if state.ringEnabled {
+                Text("Ring color")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                LazyVGrid(columns: grid, spacing: 8) {
+                    ForEach(AppState.defaultColors, id: \.self) { hex in
+                        Button {
+                            state.colorHex = hex
+                        } label: {
+                            Circle()
+                                .fill(
+                                    Color(
+                                        nsColor: NSColor(hex: hex) ?? .systemRed
                                     )
-                            }
-                            .frame(width: 28, height: 28)
+                                )
+                                .overlay {
+                                    Circle()
+                                        .strokeBorder(
+                                            Color.primary.opacity(
+                                                state.colorHex == hex ? 0.9 : 0.16
+                                            ),
+                                            lineWidth: state.colorHex == hex ? 3 : 1
+                                        )
+                                }
+                                .frame(width: 28, height: 28)
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("Use \(hex) for the ring")
                     }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("Use \(hex)")
                 }
+
+                ColorPicker(
+                    "Custom ring color",
+                    selection: Binding(
+                        get: {
+                            Color(
+                                nsColor: NSColor(hex: state.colorHex) ?? .systemRed
+                            )
+                        },
+                        set: { color in
+                            state.colorHex = NSColor(color).hexString
+                        }
+                    ),
+                    supportsOpacity: false
+                )
+
+                slider(
+                    title: "Ring size",
+                    value: $state.ringDiameter,
+                    range: 28...88,
+                    valueLabel: "\(Int(state.ringDiameter)) pt"
+                )
+
+                slider(
+                    title: "Ring weight",
+                    value: $state.ringThickness,
+                    range: 2...10,
+                    valueLabel: "\(Int(state.ringThickness)) pt"
+                )
             }
 
             ColorPicker(
-                "Custom color",
+                "Cursor color",
                 selection: Binding(
                     get: {
                         Color(
-                            nsColor: NSColor(hex: state.colorHex) ?? .systemRed
+                            nsColor: NSColor(hex: state.cursorColorHex) ?? .black
                         )
                     },
                     set: { color in
-                        state.colorHex = NSColor(color).hexString
+                        state.cursorColorHex = NSColor(color).hexString
                     }
                 ),
                 supportsOpacity: false
@@ -174,20 +223,6 @@ struct SettingsView: View {
                 range: 1.1...3,
                 valueLabel: String(format: "%.1f×", state.cursorScale)
             )
-
-            slider(
-                title: "Ring size",
-                value: $state.ringDiameter,
-                range: 28...88,
-                valueLabel: "\(Int(state.ringDiameter)) pt"
-            )
-
-            slider(
-                title: "Ring weight",
-                value: $state.ringThickness,
-                range: 2...10,
-                valueLabel: "\(Int(state.ringThickness)) pt"
-            )
         }
     }
 
@@ -196,16 +231,34 @@ struct SettingsView: View {
             Text("Click feedback")
                 .font(.subheadline.weight(.semibold))
 
-            Picker("Effect", selection: $state.clickEffect) {
-                ForEach(ClickEffect.allCases) { effect in
-                    Text(effect.label).tag(effect)
+            if state.ringEnabled {
+                Picker("Ring effect", selection: $state.clickEffect) {
+                    ForEach(ClickEffect.allCases) { effect in
+                        Text(effect.label).tag(effect)
+                    }
                 }
+                .pickerStyle(.segmented)
+            } else {
+                Text("Ring effects are hidden. Sound can still play on every click.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
-            .pickerStyle(.segmented)
 
-            Toggle("Play subtle click sound", isOn: $state.soundEnabled)
+            Toggle("Play click sound", isOn: $state.soundEnabled)
 
             if state.soundEnabled {
+                HStack {
+                    Picker("Sound", selection: $state.soundStyle) {
+                        ForEach(ClickSoundStyle.allCases) { style in
+                            Text(style.label).tag(style)
+                        }
+                    }
+
+                    Button("Preview") {
+                        state.previewClickSound()
+                    }
+                }
+
                 slider(
                     title: "Click volume",
                     value: $state.soundVolume,
@@ -237,6 +290,54 @@ struct SettingsView: View {
                     set: { state.setLaunchAtLogin($0) }
                 )
             )
+
+            Toggle(
+                "Global shortcut",
+                isOn: Binding(
+                    get: { state.hotKeyEnabled },
+                    set: { state.setHotKeyEnabled($0) }
+                )
+            )
+
+            if state.hotKeyEnabled {
+                HStack {
+                    Picker(
+                        "Modifier",
+                        selection: Binding(
+                            get: { state.hotKeyModifier },
+                            set: { state.setHotKeyModifier($0) }
+                        )
+                    ) {
+                        ForEach(HotKeyModifier.allCases) { modifier in
+                            Text(modifier.label).tag(modifier)
+                        }
+                    }
+
+                    Picker(
+                        "Key",
+                        selection: Binding(
+                            get: { state.hotKeyKey },
+                            set: { state.setHotKeyKey($0) }
+                        )
+                    ) {
+                        ForEach(HotKeyKey.allCases) { key in
+                            Text(key.label).tag(key)
+                        }
+                    }
+                    .frame(width: 74)
+                }
+
+                Text("\(state.hotKeyLabel) toggles Recording mode from any app.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            if let hotKeyMessage = state.hotKeyMessage {
+                Text(hotKeyMessage)
+                    .font(.caption)
+                    .foregroundStyle(.orange)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
 
             if let launchAtLoginMessage = state.launchAtLoginMessage {
                 Text(launchAtLoginMessage)

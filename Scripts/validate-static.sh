@@ -10,6 +10,7 @@ required=(
   "Sources/CursorCore/KineticCursorModel.swift"
   "Sources/ScreenRecordCursor/ScreenRecordCursorApp.swift"
   "Sources/ScreenRecordCursor/CursorOverlayController.swift"
+  "Sources/ScreenRecordCursor/GlobalHotKeyController.swift"
   "Sources/ScreenRecordCursor/LaunchAtLoginController.swift"
   "Sources/ScreenRecordCursor/NativeCursorVisibilityController.swift"
   "Sources/ScreenRecordCursor/GlobalClickMonitor.swift"
@@ -58,6 +59,12 @@ if grep -R -nE \
   'URLSession|NSURLConnection|import Network|import WebKit|OpenAI|Anthropic|telemetry|analytics|CGEventPost|CGEvent\.post|AXUIElement' \
   Sources; then
   echo "Unexpected network, AI, telemetry, event-posting, or Accessibility API." >&2
+  exit 1
+fi
+
+if grep -R -nE 'NSEvent\.addGlobalMonitorForEvents.*key|CGEvent\.tapCreate' \
+  Sources/ScreenRecordCursor; then
+  echo "Global shortcuts must not require keyboard monitoring permissions." >&2
   exit 1
 fi
 

@@ -24,10 +24,28 @@ final class AppState: ObservableObject {
     @Published private(set) var hasCompletedOnboarding: Bool
     @Published private(set) var launchAtLoginEnabled = false
     @Published private(set) var launchAtLoginMessage: String?
+    @Published private(set) var hotKeyEnabled: Bool
+    @Published private(set) var hotKeyModifier: HotKeyModifier
+    @Published private(set) var hotKeyKey: HotKeyKey
+    @Published private(set) var hotKeyMessage: String?
 
     @Published var colorHex: String {
         didSet {
             save(colorHex, for: Keys.colorHex)
+            overlayController.refreshSettings()
+        }
+    }
+
+    @Published var cursorColorHex: String {
+        didSet {
+            save(cursorColorHex, for: Keys.cursorColorHex)
+            overlayController.refreshSettings()
+        }
+    }
+
+    @Published var ringEnabled: Bool {
+        didSet {
+            save(ringEnabled, for: Keys.ringEnabled)
             overlayController.refreshSettings()
         }
     }
@@ -72,6 +90,12 @@ final class AppState: ObservableObject {
         }
     }
 
+    @Published var soundStyle: ClickSoundStyle {
+        didSet {
+            save(soundStyle.rawValue, for: Keys.soundStyle)
+        }
+    }
+
     @Published var kineticEnabled: Bool {
         didSet {
             save(kineticEnabled, for: Keys.kineticEnabled)
@@ -81,33 +105,53 @@ final class AppState: ObservableObject {
 
     private let defaults = UserDefaults.standard
     private let launchAtLoginController = LaunchAtLoginController()
+    private lazy var globalHotKeyController = GlobalHotKeyController {
+        [weak self] in
+        self?.toggleRecordingMode()
+    }
     private var overlayController: CursorOverlayController!
 
     private enum Keys {
         static let colorHex = "colorHex"
+        static let cursorColorHex = "cursorColorHex"
+        static let ringEnabled = "ringEnabled"
         static let ringDiameter = "ringDiameter"
         static let ringThickness = "ringThickness"
         static let cursorScale = "cursorScale"
         static let clickEffect = "clickEffect"
         static let soundEnabled = "soundEnabled"
         static let soundVolume = "soundVolume"
+        static let soundStyle = "soundStyle"
         static let kineticEnabled = "kineticEnabled"
         static let hasCompletedOnboarding = "hasCompletedOnboarding"
+        static let hotKeyEnabled = "hotKeyEnabled"
+        static let hotKeyModifier = "hotKeyModifier"
+        static let hotKeyKey = "hotKeyKey"
     }
 
     private init() {
         defaults.register(defaults: [
             Keys.colorHex: "#FF3B30",
+            Keys.cursorColorHex: "#000000",
+            Keys.ringEnabled: true,
             Keys.ringDiameter: 44.0,
             Keys.ringThickness: 4.0,
             Keys.cursorScale: 1.65,
             Keys.clickEffect: ClickEffect.ripple.rawValue,
             Keys.soundEnabled: true,
             Keys.soundVolume: 0.28,
-            Keys.kineticEnabled: false
+            Keys.soundStyle: ClickSoundStyle.systemTick.rawValue,
+            Keys.kineticEnabled: false,
+            Keys.hotKeyEnabled: true,
+            Keys.hotKeyModifier: HotKeyModifier.control.rawValue,
+            Keys.hotKeyKey: HotKeyKey.semicolon.rawValue
         ])
 
         colorHex = defaults.string(forKey: Keys.colorHex) ?? "#FF3B30"
+        cursorColorHex = defaults.string(
+            forKey: Keys.cursorColorHex
+        ) ?? "#000000"
+        ringEnabled = defaults.bool(forKey: Keys.ringEnabled)
         ringDiameter = defaults.double(forKey: Keys.ringDiameter)
         ringThickness = defaults.double(forKey: Keys.ringThickness)
         cursorScale = defaults.double(forKey: Keys.cursorScale)
@@ -116,15 +160,27 @@ final class AppState: ObservableObject {
         ) ?? .ripple
         soundEnabled = defaults.bool(forKey: Keys.soundEnabled)
         soundVolume = defaults.double(forKey: Keys.soundVolume)
+        soundStyle = ClickSoundStyle(
+            rawValue: defaults.string(forKey: Keys.soundStyle) ?? ""
+        ) ?? .systemTick
         kineticEnabled = defaults.bool(forKey: Keys.kineticEnabled)
         hasCompletedOnboarding = defaults.bool(
             forKey: Keys.hasCompletedOnboarding
         )
+        hotKeyEnabled = defaults.bool(forKey: Keys.hotKeyEnabled)
+        hotKeyModifier = HotKeyModifier(
+            rawValue: defaults.string(forKey: Keys.hotKeyModifier) ?? ""
+        ) ?? .control
+        hotKeyKey = HotKeyKey(
+            rawValue: defaults.string(forKey: Keys.hotKeyKey) ?? ""
+        ) ?? .semicolon
 
         overlayController = CursorOverlayController(
             settingsProvider: { [weak self] in
                 self?.visualSettings ?? CursorVisualSettings(
                     ringColor: .systemRed,
+                    cursorColor: .black,
+                    ringEnabled: true,
                     ringDiameter: 44,
                     ringThickness: 4,
                     cursorScale: 1.65,
@@ -134,16 +190,22 @@ final class AppState: ObservableObject {
             },
             clickSoundProvider: { [weak self] in
                 guard let self, self.soundEnabled else { return nil }
-                return Float(self.soundVolume)
+                return (
+                    style: self.soundStyle,
+                    volume: Float(self.soundVolume)
+                )
             }
         )
 
         refreshLaunchAtLoginStatus()
+        configureGlobalHotKey()
     }
 
     var visualSettings: CursorVisualSettings {
         CursorVisualSettings(
             ringColor: NSColor(hex: colorHex) ?? .systemRed,
+            cursorColor: NSColor(hex: cursorColorHex) ?? .black,
+            ringEnabled: ringEnabled,
             ringDiameter: ringDiameter,
             ringThickness: ringThickness,
             cursorScale: cursorScale,
@@ -223,16 +285,62 @@ final class AppState: ObservableObject {
         }
     }
 
+    var hotKeyLabel: String {
+        "\(hotKeyModifier.symbol)\(hotKeyKey.label)"
+    }
+
+    func setHotKeyEnabled(_ enabled: Bool) {
+        hotKeyMessage = nil
+
+        if enabled {
+            guard globalHotKeyController.register(
+                modifier: hotKeyModifier,
+                key: hotKeyKey
+            ) else {
+                hotKeyEnabled = false
+                save(false, for: Keys.hotKeyEnabled)
+                hotKeyMessage = """
+                \(hotKeyLabel) is already used by macOS or another app. \
+                Choose a different shortcut.
+                """
+                return
+            }
+        } else {
+            globalHotKeyController.unregister()
+        }
+
+        hotKeyEnabled = enabled
+        save(enabled, for: Keys.hotKeyEnabled)
+    }
+
+    func setHotKeyModifier(_ modifier: HotKeyModifier) {
+        updateHotKey(modifier: modifier, key: hotKeyKey)
+    }
+
+    func setHotKeyKey(_ key: HotKeyKey) {
+        updateHotKey(modifier: hotKeyModifier, key: key)
+    }
+
     func resetSettings() {
         colorHex = "#FF3B30"
+        cursorColorHex = "#000000"
+        ringEnabled = true
         ringDiameter = 44
         ringThickness = 4
         cursorScale = 1.65
         clickEffect = .ripple
         soundEnabled = true
         soundVolume = 0.28
+        soundStyle = .systemTick
         kineticEnabled = false
         statusMessage = "Appearance, motion, and click settings were reset."
+    }
+
+    func previewClickSound() {
+        overlayController.previewClickSound(
+            style: soundStyle,
+            volume: Float(soundVolume)
+        )
     }
 
     func stopForSystemTransition() {
@@ -261,6 +369,50 @@ final class AppState: ObservableObject {
         overlayController.stop()
         isActive = false
         statusMessage = message
+    }
+
+    private func configureGlobalHotKey() {
+        guard hotKeyEnabled else { return }
+
+        if !globalHotKeyController.register(
+            modifier: hotKeyModifier,
+            key: hotKeyKey
+        ) {
+            hotKeyEnabled = false
+            save(false, for: Keys.hotKeyEnabled)
+            hotKeyMessage = """
+            \(hotKeyLabel) is already used by macOS or another app. \
+            Choose a different shortcut.
+            """
+        }
+    }
+
+    private func updateHotKey(modifier: HotKeyModifier, key: HotKeyKey) {
+        let previousModifier = hotKeyModifier
+        let previousKey = hotKeyKey
+        hotKeyMessage = nil
+
+        if hotKeyEnabled {
+            guard globalHotKeyController.register(
+                modifier: modifier,
+                key: key
+            ) else {
+                _ = globalHotKeyController.register(
+                    modifier: previousModifier,
+                    key: previousKey
+                )
+                hotKeyMessage = """
+                \(modifier.symbol)\(key.label) is already used by macOS or \
+                another app.
+                """
+                return
+            }
+        }
+
+        hotKeyModifier = modifier
+        hotKeyKey = key
+        save(modifier.rawValue, for: Keys.hotKeyModifier)
+        save(key.rawValue, for: Keys.hotKeyKey)
     }
 
     private func save(_ value: Any, for key: String) {

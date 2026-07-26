@@ -12,13 +12,17 @@ paid runtime dependencies.
 - [x] Enlarged opaque vector cursor
 - [x] Ten preset colors
 - [x] Native custom color picker
+- [x] Independent ring and cursor colors
+- [x] Ring-off mode for cursor-only recordings
 - [x] Adjustable cursor size, ring size, and ring weight
 - [x] Ripple click effect
 - [x] Blink click effect
 - [x] Optional procedurally generated click sound and volume control
+- [x] Five selectable local click sounds
 - [x] Optional kinetic cursor driven by a deterministic motion model
 - [x] No AI, account, analytics, network connection, or third-party dependency
 - [x] Local settings persistence
+- [x] Customizable two-key global Recording mode shortcut
 - [x] Mouse-event pass-through
 - [x] Intel and Apple Silicon CI builds
 - [x] Universal app release automation

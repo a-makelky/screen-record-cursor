@@ -33,7 +33,7 @@ advantage merely to produce a weaker ring-only App Store edition.
 - [x] First-run recording test and local-only explanation
 - [x] Launch at Login
 - [x] Version, support, and reset controls
-- [ ] User-configurable global Recording mode shortcut
+- [x] User-configurable two-key global Recording mode shortcut
 - [ ] Complete the real-Mac safety matrix in `TESTING.md`
 
 ### 2. Minimum paid feature set
@@ -41,6 +41,9 @@ advantage merely to produce a weaker ring-only App Store edition.
 - [ ] Visibility modes: Always, While Moving, and Clicks Only
 - [ ] Adjustable movement idle delay
 - [ ] Adjustable ring opacity and click-effect intensity
+- [x] Independent ring and cursor colors
+- [x] Ring-off mode
+- [x] Five selectable local click sounds
 - [ ] Separate left-click and right-click colors
 - [ ] Presets: Tutorial, Presentation, and Minimal
 

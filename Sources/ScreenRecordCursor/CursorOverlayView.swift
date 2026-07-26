@@ -9,6 +9,8 @@ final class CursorOverlayView: NSView {
 
     var settings = CursorVisualSettings(
         ringColor: .systemRed,
+        cursorColor: .black,
+        ringEnabled: true,
         ringDiameter: 44,
         ringThickness: 4,
         cursorScale: 1.65,
@@ -61,8 +63,10 @@ final class CursorOverlayView: NSView {
         super.draw(dirtyRect)
 
         let hotspot = CGPoint(x: bounds.midX, y: bounds.midY)
-        drawRipples(around: hotspot)
-        drawPersistentRing(around: hotspot)
+        if settings.ringEnabled {
+            drawRipples(around: hotspot)
+            drawPersistentRing(around: hotspot)
+        }
         drawCursor(at: hotspot)
     }
 
@@ -131,15 +135,16 @@ final class CursorOverlayView: NSView {
         // First paint a wider opaque silhouette. The overlay lives above the
         // system cursor, and this antialiased coverage pass prevents native
         // cursor pixels from leaking through around the arrowhead.
-        NSColor.white.setStroke()
+        let outlineColor = settings.cursorColor.contrastingStrokeColor
+        outlineColor.setStroke()
         path.lineJoinStyle = .round
         path.lineWidth = 4.8 / settings.cursorScale
         path.stroke()
 
-        NSColor.black.setFill()
+        settings.cursorColor.setFill()
         path.fill()
 
-        NSColor.white.withAlphaComponent(0.98).setStroke()
+        outlineColor.withAlphaComponent(0.98).setStroke()
         path.lineWidth = 1.8 / settings.cursorScale
         path.stroke()
 
