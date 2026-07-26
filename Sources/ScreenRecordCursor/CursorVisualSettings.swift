@@ -18,8 +18,30 @@ enum ClickEffect: String, CaseIterable, Identifiable {
     }
 }
 
+enum ClickSoundStyle: String, CaseIterable, Identifiable {
+    case systemTick
+    case softTap
+    case mechanical
+    case typewriter
+    case bubblePop
+
+    var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .systemTick: "System Tick"
+        case .softTap: "Soft Tap"
+        case .mechanical: "Mechanical Click"
+        case .typewriter: "Typewriter"
+        case .bubblePop: "Bubble Pop"
+        }
+    }
+}
+
 struct CursorVisualSettings {
     var ringColor: NSColor
+    var cursorColor: NSColor
+    var ringEnabled: Bool
     var ringDiameter: CGFloat
     var ringThickness: CGFloat
     var cursorScale: CGFloat
@@ -53,5 +75,18 @@ extension NSColor {
             Int(round(rgb.greenComponent * 255)),
             Int(round(rgb.blueComponent * 255))
         )
+    }
+
+    var contrastingStrokeColor: NSColor {
+        guard let rgb = usingColorSpace(.sRGB) else {
+            return .white
+        }
+
+        let luminance = (
+            0.2126 * rgb.redComponent
+            + 0.7152 * rgb.greenComponent
+            + 0.0722 * rgb.blueComponent
+        )
+        return luminance > 0.58 ? .black : .white
     }
 }

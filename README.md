@@ -11,10 +11,13 @@ connection. It is a native Swift and AppKit app with no third-party dependencies
 - Draws a persistent colored ring at the real cursor hotspot
 - Adds a larger, high-contrast vector cursor at the native cursor hotspot
 - Includes 10 preset colors and a full macOS color picker
+- Separately customizes the ring and cursor colors
+- Can hide the ring while keeping the enlarged kinetic cursor and click audio
 - Shows a ripple, ring blink, both, or no effect on mouse-down
-- Plays a subtle, procedurally generated click sound
+- Offers five locally generated click sounds, from clean tones to mechanical clicks
 - Offers an optional kinetic cursor whose tail swings behind its motion
 - Includes a guided first-run cursor test and Launch at Login
+- Toggles Recording mode globally with a customizable two-key shortcut
 - Lives entirely in the menu bar and stores settings in local `UserDefaults`
 
 The ring and cursor overlay never receive mouse events. Your clicks, drags,
@@ -111,6 +114,9 @@ Screen Record Cursor:
 - does not make network requests
 - does not include telemetry
 - does not use AI
+
+Its five click sounds are generated locally from code. The app does not bundle
+or download third-party audio files.
 
 It observes mouse-down events only while Recording mode is active so it can
 draw the selected click effect and play the optional sound.
