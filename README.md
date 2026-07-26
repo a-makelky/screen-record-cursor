@@ -55,10 +55,22 @@ because the overlay is a separate transparent macOS window.
 
 ## How cursor enlargement works
 
-The app draws a high-contrast vector cursor at the native hotspot without using
-private APIs or changing the system cursor. Its transparent overlay is placed
-one window level above macOS's documented cursor window level, and an opaque
-arrow silhouette covers the native pointer so the result reads as one cursor.
+Recording mode hides the native macOS pointer and draws one high-contrast vector
+cursor at the exact native hotspot. This avoids the unreliable cursor-over-cursor
+compositing that can expose the small system pointer inside the enlarged arrow.
+
+Apple's public Quartz cursor visibility API normally requires the foreground
+application. Because Screen Record Cursor is a background menu-bar app, it
+dynamically uses the longstanding WindowServer `SetsCursorInBackground`
+connection property, then makes one balanced `CGDisplayHideCursor` request. A
+watchdog repairs the hide request if Dock or WindowServer activity makes the
+native pointer visible. Turning Recording mode off or quitting the app restores
+the native cursor.
+
+`SetsCursorInBackground` is an undocumented macOS implementation detail, so this
+build is intended for direct, open-source distribution rather than the Mac App
+Store. The symbols are resolved at runtime: if Apple removes them, the app still
+launches and logs the unsupported condition instead of crashing.
 
 Some recorders independently add a native cursor after capturing the screen. If
 a finished recording still contains a second cursor, turn off that recorder's
