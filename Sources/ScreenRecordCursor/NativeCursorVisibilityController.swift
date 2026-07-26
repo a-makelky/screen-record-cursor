@@ -14,10 +14,13 @@ final class NativeCursorVisibilityController {
     private typealias MainConnectionIDFunction = @convention(c) () -> Int32
     private typealias SetConnectionPropertyFunction =
         @convention(c) (Int32, Int32, CFString, CFTypeRef) -> Int32
+    private typealias CursorIsVisibleFunction = @convention(c) () -> Int32
 
     private var wantsCursorHidden = false
     private var hideRequestOutstanding = false
     private var backgroundControlResult: Bool?
+    private var cursorIsVisibleFunction: CursorIsVisibleFunction?
+    private var didResolveCursorIsVisible = false
     private var watchdog: DispatchSourceTimer?
 
     func hideForRecording() {
@@ -74,7 +77,7 @@ final class NativeCursorVisibilityController {
             guard
                 let self,
                 self.wantsCursorHidden,
-                CGCursorIsVisible() != 0
+                self.isNativeCursorVisible() == true
             else {
                 return
             }
@@ -83,6 +86,24 @@ final class NativeCursorVisibilityController {
         }
         watchdog = timer
         timer.resume()
+    }
+
+    private func isNativeCursorVisible() -> Bool? {
+        if !didResolveCursorIsVisible {
+            didResolveCursorIsVisible = true
+            if
+                let handle = dlopen(nil, RTLD_LAZY),
+                let symbol = dlsym(handle, "CGCursorIsVisible")
+            {
+                cursorIsVisibleFunction = unsafeBitCast(
+                    symbol,
+                    to: CursorIsVisibleFunction.self
+                )
+            }
+        }
+
+        guard let cursorIsVisibleFunction else { return nil }
+        return cursorIsVisibleFunction() != 0
     }
 
     private func stopWatchdog() {
