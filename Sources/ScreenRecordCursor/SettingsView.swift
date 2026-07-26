@@ -12,10 +12,15 @@ struct SettingsView: View {
     var body: some View {
         Group {
             if state.hasCompletedOnboarding {
-                ScrollView {
+                if usesCompactSettingsLayout {
+                    ScrollView {
+                        settings
+                    }
+                    .frame(height: compactSettingsHeight)
+                } else {
                     settings
+                        .fixedSize(horizontal: false, vertical: true)
                 }
-                .frame(maxHeight: settingsMaximumHeight)
             } else {
                 onboarding
             }
@@ -27,9 +32,14 @@ struct SettingsView: View {
         }
     }
 
-    private var settingsMaximumHeight: CGFloat {
+    private var usesCompactSettingsLayout: Bool {
+        let visibleHeight = NSScreen.main?.visibleFrame.height ?? 900
+        return visibleHeight < 840
+    }
+
+    private var compactSettingsHeight: CGFloat {
         let visibleHeight = NSScreen.main?.visibleFrame.height ?? 760
-        return max(420, min(760, visibleHeight - 48))
+        return max(420, min(720, visibleHeight - 96))
     }
 
     private var settings: some View {
