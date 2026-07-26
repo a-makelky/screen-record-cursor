@@ -49,11 +49,12 @@ jobs:
           APP_VERSION: ${{ github.ref_name }}
           APP_BUILD: ${{ github.run_number }}
         run: |
-          if [[ ! "$APP_VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "Tag must use vMAJOR.MINOR.PATCH" >&2
+          if [[ ! "$APP_VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+            echo "Tag must use vMAJOR.MINOR.PATCH or vMAJOR.MINOR.PATCH-PRERELEASE" >&2
             exit 1
           fi
           APP_VERSION="${APP_VERSION#v}"
+          APP_VERSION="${APP_VERSION%%-*}"
           mkdir -p universal release
           lipo -create \
             executables/ScreenRecordCursor-arm64 \
@@ -82,8 +83,16 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          release_flags=()
+          release_title="Screen Record Cursor $GITHUB_REF_NAME"
+          if [[ "$GITHUB_REF_NAME" == *-* ]]; then
+            release_flags+=(--prerelease)
+            release_title="$release_title (Alpha)"
+          fi
+
           gh release create "$GITHUB_REF_NAME" \
             release/Screen-Record-Cursor-"$GITHUB_REF_NAME".zip \
             release/Screen-Record-Cursor-"$GITHUB_REF_NAME".sha256 \
             --generate-notes \
-            --title "Screen Record Cursor $GITHUB_REF_NAME"
+            --title "$release_title" \
+            "${release_flags[@]}"
