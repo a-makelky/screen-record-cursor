@@ -1,24 +1,25 @@
-# Screen Record Cursor
+# Screen Recording Cursor
 
 A free, local macOS menu-bar utility that makes the pointer easy to follow in
 screen recordings.
 
-Screen Record Cursor has no AI, account, subscription, analytics, or network
+Screen Recording Cursor has no AI, account, subscription, analytics, or network
 connection. It is a native Swift and AppKit app with no third-party dependencies.
 
 ## What it does
 
-- Draws a persistent colored ring at the real cursor hotspot
+- Shows the colored ring only while clicking by default, with Always and Off options
 - Adds a larger, high-contrast vector cursor at the native cursor hotspot
 - Includes 10 preset colors and a full macOS color picker
 - Separately customizes the ring and cursor colors
-- Can hide the ring while keeping the enlarged kinetic cursor and click audio
+- Can hide the ring at rest while keeping click animation and audio feedback
 - Shows a ripple, ring blink, both, or no effect on mouse-down
-- Offers five locally generated click sounds, from clean tones to mechanical clicks
+- Offers five bundled WAV click sounds, from mouse clicks to playful pops
 - Offers an optional kinetic cursor whose tail swings behind its motion
 - Includes a guided first-run cursor test and Launch at Login
 - Toggles Recording mode globally with a customizable two-key shortcut
-- Lives entirely in the menu bar and stores settings in local `UserDefaults`
+- Uses a compact menu-bar panel for daily controls and a focused Settings window
+- Stores settings locally in `UserDefaults`
 
 The ring and cursor overlay never receive mouse events. Your clicks, drags,
 scrolling, and gestures continue to reach the app underneath.
@@ -34,9 +35,9 @@ scrolling, and gestures continue to reach the app underneath.
 
 1. Open the repository's [Releases](https://github.com/a-makelky/screen-record-cursor/releases)
    page and choose the newest alpha release.
-2. Download the file named `Screen-Record-Cursor-*.zip` under **Assets**. Do not
+2. Download the file named `Screen-Recording-Cursor-*.zip` under **Assets**. Do not
    download GitHub's automatically generated **Source code** archives.
-3. Unzip the download and move **Screen Record Cursor.app** to Applications.
+3. Unzip the download and move **Screen Recording Cursor.app** to Applications.
 4. Control-click the app, choose **Open**, and confirm the first launch.
 5. Use the menu-bar icon to turn on **Recording mode**.
 
@@ -54,7 +55,7 @@ git clone https://github.com/a-makelky/screen-record-cursor.git
 cd screen-record-cursor
 make test
 make install
-open "$HOME/Applications/Screen Record Cursor.app"
+open "$HOME/Applications/Screen Recording Cursor.app"
 ```
 
 The app will appear in the menu bar, not the Dock. Open it and turn on
@@ -62,10 +63,10 @@ The app will appear in the menu bar, not the Dock. Open it and turn on
 
 ## Recording with Descript
 
-1. Start Screen Record Cursor and turn on Recording mode.
+1. Start Screen Recording Cursor and turn on Recording mode.
 2. Choose your cursor scale, ring color, and click effect.
 3. In Descript, record the whole display or a screen region.
-4. Enable computer audio if you want the generated click sound in the recording.
+4. Enable computer audio if you want the selected click sound in the recording.
 5. Make a five-second test recording before the real take.
 
 A recorder that captures only one application window may omit the overlay
@@ -78,7 +79,7 @@ cursor at the exact native hotspot. This avoids the unreliable cursor-over-curso
 compositing that can expose the small system pointer inside the enlarged arrow.
 
 Apple's public Quartz cursor visibility API normally requires the foreground
-application. Because Screen Record Cursor is a background menu-bar app, it
+application. Because Screen Recording Cursor is a background menu-bar app, it
 dynamically uses the longstanding WindowServer `SetsCursorInBackground`
 connection property, then makes one balanced `CGDisplayHideCursor` request. A
 watchdog repairs the hide request if Dock or WindowServer activity makes the
@@ -92,7 +93,7 @@ launches and logs the unsupported condition instead of crashing.
 
 Some recorders independently add a native cursor after capturing the screen. If
 a finished recording still contains a second cursor, turn off that recorder's
-cursor setting and let Screen Record Cursor provide the visible pointer.
+cursor setting and let Screen Recording Cursor provide the visible pointer.
 
 ## Kinetic cursor
 
@@ -106,7 +107,7 @@ tests.
 
 ## Privacy
 
-Screen Record Cursor:
+Screen Recording Cursor:
 
 - does not capture screen pixels
 - does not record audio or use the microphone
@@ -115,8 +116,8 @@ Screen Record Cursor:
 - does not include telemetry
 - does not use AI
 
-Its five click sounds are generated locally from code. The app does not bundle
-or download third-party audio files.
+Its five click sounds are bundled WAV resources. The app never downloads audio
+or other content.
 
 It observes mouse-down events only while Recording mode is active so it can
 draw the selected click effect and play the optional sound.

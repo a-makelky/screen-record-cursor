@@ -53,18 +53,34 @@ cursor is rendered in a separate transparent window.
 ## First-run and daily controls
 
 - [ ] First-run instructions appear once
-- [ ] Starting the five-second test enables one enlarged cursor
+- [ ] Try the cursor enables one enlarged cursor
+- [ ] Menu-bar popover fits completely on the built-in MacBook display
+- [ ] Popover shows only the six daily summaries and does not scroll
+- [ ] Every summary row opens the matching Cursor, Clicks, or General section
+- [ ] Settings opens as a separate 824 × 488 point window
+- [ ] Cursor, Clicks, and General sections fit without scrolling
+- [ ] Setting Ring to Off or turning off Click sound hides dependent controls
+- [ ] Settings spacing remains clear in both light and dark mode
 - [ ] A failed native-cursor hide leaves Recording mode off
 - [ ] Launch at Login works after the app is moved to Applications
 - [ ] Launch at Login survives a reboot
 - [ ] Reset Settings restores the documented defaults
 - [ ] Support opens the repository issue page
 - [ ] Visual and sound settings persist after relaunch
-- [ ] Ring-off mode leaves only the enlarged cursor and optional click sound
+- [ ] Ring Always mode keeps the ring visible between clicks
+- [ ] Ring On Click is the default after a fresh install or Reset Settings
+- [ ] Ring On Click mode hides the ring at rest and reveals it only during Ripple,
+      Blink, or Both
+- [ ] Ring Off mode leaves only the enlarged cursor and optional click sound
+- [ ] Explicitly saved Ring on/off preferences migrate to Always/Off after updating
 - [ ] Every cursor color retains a high-contrast outline
 - [ ] All five click sounds preview and play during Recording mode
 - [ ] Default Control-semicolon shortcut toggles Recording mode from another app
-- [ ] Customized modifier and key persist after relaunch
+- [ ] Open shortcut field captures any supported one- or two-key combination
+- [ ] Plain typing keys without a modifier are rejected
+- [ ] More than one modifier is rejected
+- [ ] Escape cancels capture and Delete clears the shortcut
+- [ ] A recorded shortcut persists after relaunch
 - [ ] A conflicting shortcut is rejected without losing the previous shortcut
 
 Record the macOS version, Mac model, display arrangement, recorder version, and

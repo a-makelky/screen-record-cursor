@@ -8,18 +8,30 @@ required=(
   "Package.swift"
   "Resources/Info.plist"
   "Sources/CursorCore/KineticCursorModel.swift"
+  "Sources/CursorCore/RingVisibilityMode.swift"
   "Sources/ScreenRecordCursor/ScreenRecordCursorApp.swift"
+  "Sources/ScreenRecordCursor/SettingsView.swift"
+  "Sources/ScreenRecordCursor/SettingsWindowController.swift"
+  "Sources/ScreenRecordCursor/SettingsWindowView.swift"
   "Sources/ScreenRecordCursor/CursorOverlayController.swift"
   "Sources/ScreenRecordCursor/GlobalHotKeyController.swift"
+  "Sources/ScreenRecordCursor/ShortcutRecorderView.swift"
   "Sources/ScreenRecordCursor/LaunchAtLoginController.swift"
   "Sources/ScreenRecordCursor/NativeCursorVisibilityController.swift"
   "Sources/ScreenRecordCursor/GlobalClickMonitor.swift"
   "Tests/CursorCoreTests/KineticCursorModelTests.swift"
+  "Tests/CursorCoreTests/RingVisibilityModeTests.swift"
   "LICENSE"
   "README.md"
   "TESTING.md"
   "docs/PUBLIC_RELEASE.md"
   "docs/EDUCATOR_ACCESS.md"
+  "docs/SOUND_ASSETS.md"
+  "Resources/Sounds/mouse-click.wav"
+  "Resources/Sounds/mouse-pop.wav"
+  "Resources/Sounds/plop-click.wav"
+  "Resources/Sounds/spacebar.wav"
+  "Resources/Sounds/typewriter.wav"
 )
 
 for path in "${required[@]}"; do
@@ -77,6 +89,11 @@ fi
 
 if grep -q '\.package(' Package.swift; then
   echo "External Swift package dependencies are not allowed." >&2
+  exit 1
+fi
+
+if grep -R -nE 'makeClickWAV|deterministicNoise' Sources/ScreenRecordCursor; then
+  echo "Click sounds must come from the bundled WAV resources." >&2
   exit 1
 fi
 

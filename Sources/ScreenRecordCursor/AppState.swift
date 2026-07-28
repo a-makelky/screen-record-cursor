@@ -1,5 +1,6 @@
 import AppKit
 import Combine
+import CursorCore
 import Foundation
 
 @MainActor
@@ -19,14 +20,26 @@ final class AppState: ObservableObject {
         "#FFFFFF"  // white
     ]
 
+    static let cursorColors = [
+        "#000000", // black
+        "#FFFFFF", // white
+        "#FFCC00", // yellow
+        "#FF3B30", // red
+        "#007AFF", // blue
+        "#34C759", // green
+        "#AF52DE", // purple
+        "#FF2D55", // pink
+        "#FF9500", // orange
+        "#00C7BE"  // teal
+    ]
+
     @Published private(set) var isActive = false
     @Published private(set) var statusMessage: String?
     @Published private(set) var hasCompletedOnboarding: Bool
     @Published private(set) var launchAtLoginEnabled = false
     @Published private(set) var launchAtLoginMessage: String?
     @Published private(set) var hotKeyEnabled: Bool
-    @Published private(set) var hotKeyModifier: HotKeyModifier
-    @Published private(set) var hotKeyKey: HotKeyKey
+    @Published private(set) var hotKeyShortcut: HotKeyShortcut
     @Published private(set) var hotKeyMessage: String?
 
     @Published var colorHex: String {
@@ -43,9 +56,18 @@ final class AppState: ObservableObject {
         }
     }
 
-    @Published var ringEnabled: Bool {
+    @Published var ringVisibility: RingVisibilityMode {
         didSet {
-            save(ringEnabled, for: Keys.ringEnabled)
+            save(ringVisibility.rawValue, for: Keys.ringVisibility)
+            save(
+                ringVisibility != .off,
+                for: Keys.legacyRingEnabled
+            )
+
+            if ringVisibility == .onClick, clickEffect == .off {
+                clickEffect = .ripple
+            }
+
             overlayController.refreshSettings()
         }
     }
@@ -114,7 +136,8 @@ final class AppState: ObservableObject {
     private enum Keys {
         static let colorHex = "colorHex"
         static let cursorColorHex = "cursorColorHex"
-        static let ringEnabled = "ringEnabled"
+        static let ringVisibility = "ringVisibility"
+        static let legacyRingEnabled = "ringEnabled"
         static let ringDiameter = "ringDiameter"
         static let ringThickness = "ringThickness"
         static let cursorScale = "cursorScale"
@@ -126,61 +149,71 @@ final class AppState: ObservableObject {
         static let hasCompletedOnboarding = "hasCompletedOnboarding"
         static let hotKeyEnabled = "hotKeyEnabled"
         static let hotKeyModifier = "hotKeyModifier"
-        static let hotKeyKey = "hotKeyKey"
+        static let hotKeyKeyCode = "hotKeyKeyCode"
+        static let hotKeyKeyLabel = "hotKeyKeyLabel"
     }
 
     private init() {
         defaults.register(defaults: [
             Keys.colorHex: "#FF3B30",
             Keys.cursorColorHex: "#000000",
-            Keys.ringEnabled: true,
             Keys.ringDiameter: 44.0,
             Keys.ringThickness: 4.0,
             Keys.cursorScale: 1.65,
             Keys.clickEffect: ClickEffect.ripple.rawValue,
             Keys.soundEnabled: true,
             Keys.soundVolume: 0.28,
-            Keys.soundStyle: ClickSoundStyle.systemTick.rawValue,
+            Keys.soundStyle: ClickSoundStyle.mouseClick.rawValue,
             Keys.kineticEnabled: false,
             Keys.hotKeyEnabled: true,
             Keys.hotKeyModifier: HotKeyModifier.control.rawValue,
-            Keys.hotKeyKey: HotKeyKey.semicolon.rawValue
+            Keys.hotKeyKeyCode: Int(HotKeyShortcut.defaultShortcut.keyCode),
+            Keys.hotKeyKeyLabel: HotKeyShortcut.defaultShortcut.keyLabel
         ])
 
         colorHex = defaults.string(forKey: Keys.colorHex) ?? "#FF3B30"
         cursorColorHex = defaults.string(
             forKey: Keys.cursorColorHex
         ) ?? "#000000"
-        ringEnabled = defaults.bool(forKey: Keys.ringEnabled)
+        let initialRingVisibility = RingVisibilityMode.initial(
+            storedRawValue: defaults.string(forKey: Keys.ringVisibility),
+            legacyRingEnabled: defaults.object(
+                forKey: Keys.legacyRingEnabled
+            ) as? Bool
+        )
+        ringVisibility = initialRingVisibility
         ringDiameter = defaults.double(forKey: Keys.ringDiameter)
         ringThickness = defaults.double(forKey: Keys.ringThickness)
         cursorScale = defaults.double(forKey: Keys.cursorScale)
-        clickEffect = ClickEffect(
+        let storedClickEffect = ClickEffect(
             rawValue: defaults.string(forKey: Keys.clickEffect) ?? ""
         ) ?? .ripple
+        clickEffect = initialRingVisibility == .onClick && storedClickEffect == .off
+            ? .ripple
+            : storedClickEffect
         soundEnabled = defaults.bool(forKey: Keys.soundEnabled)
         soundVolume = defaults.double(forKey: Keys.soundVolume)
         soundStyle = ClickSoundStyle(
             rawValue: defaults.string(forKey: Keys.soundStyle) ?? ""
-        ) ?? .systemTick
+        ) ?? .mouseClick
         kineticEnabled = defaults.bool(forKey: Keys.kineticEnabled)
         hasCompletedOnboarding = defaults.bool(
             forKey: Keys.hasCompletedOnboarding
         )
         hotKeyEnabled = defaults.bool(forKey: Keys.hotKeyEnabled)
-        hotKeyModifier = HotKeyModifier(
-            rawValue: defaults.string(forKey: Keys.hotKeyModifier) ?? ""
-        ) ?? .control
-        hotKeyKey = HotKeyKey(
-            rawValue: defaults.string(forKey: Keys.hotKeyKey) ?? ""
-        ) ?? .semicolon
+        hotKeyShortcut = HotKeyShortcut(
+            keyCode: UInt32(defaults.integer(forKey: Keys.hotKeyKeyCode)),
+            modifier: defaults.string(forKey: Keys.hotKeyModifier)
+                .flatMap(HotKeyModifier.init(rawValue:)),
+            keyLabel: defaults.string(forKey: Keys.hotKeyKeyLabel) ?? ";"
+        )
 
         overlayController = CursorOverlayController(
             settingsProvider: { [weak self] in
                 self?.visualSettings ?? CursorVisualSettings(
                     ringColor: .systemRed,
                     cursorColor: .black,
-                    ringEnabled: true,
+                    ringVisibility: .onClick,
                     ringDiameter: 44,
                     ringThickness: 4,
                     cursorScale: 1.65,
@@ -199,13 +232,17 @@ final class AppState: ObservableObject {
 
         refreshLaunchAtLoginStatus()
         configureGlobalHotKey()
+
+        if defaults.string(forKey: Keys.ringVisibility) == nil {
+            save(ringVisibility.rawValue, for: Keys.ringVisibility)
+        }
     }
 
     var visualSettings: CursorVisualSettings {
         CursorVisualSettings(
             ringColor: NSColor(hex: colorHex) ?? .systemRed,
             cursorColor: NSColor(hex: cursorColorHex) ?? .black,
-            ringEnabled: ringEnabled,
+            ringVisibility: ringVisibility,
             ringDiameter: ringDiameter,
             ringThickness: ringThickness,
             cursorScale: cursorScale,
@@ -275,7 +312,7 @@ final class AppState: ObservableObject {
         case .requiresApproval:
             launchAtLoginEnabled = false
             launchAtLoginMessage = """
-            Approve Screen Record Cursor in System Settings → General → Login Items.
+            Approve Screen Recording Cursor in System Settings → General → Login Items.
             """
         case .unavailable:
             launchAtLoginEnabled = false
@@ -286,22 +323,19 @@ final class AppState: ObservableObject {
     }
 
     var hotKeyLabel: String {
-        "\(hotKeyModifier.symbol)\(hotKeyKey.label)"
+        hotKeyShortcut.displayLabel
     }
 
     func setHotKeyEnabled(_ enabled: Bool) {
         hotKeyMessage = nil
 
         if enabled {
-            guard globalHotKeyController.register(
-                modifier: hotKeyModifier,
-                key: hotKeyKey
-            ) else {
+            guard globalHotKeyController.register(shortcut: hotKeyShortcut) else {
                 hotKeyEnabled = false
                 save(false, for: Keys.hotKeyEnabled)
                 hotKeyMessage = """
                 \(hotKeyLabel) is already used by macOS or another app. \
-                Choose a different shortcut.
+                Record a different shortcut.
                 """
                 return
             }
@@ -313,27 +347,58 @@ final class AppState: ObservableObject {
         save(enabled, for: Keys.hotKeyEnabled)
     }
 
-    func setHotKeyModifier(_ modifier: HotKeyModifier) {
-        updateHotKey(modifier: modifier, key: hotKeyKey)
+    func setHotKeyShortcut(_ shortcut: HotKeyShortcut) {
+        guard shortcut != hotKeyShortcut else {
+            hotKeyMessage = nil
+            return
+        }
+
+        let previousShortcut = hotKeyShortcut
+        hotKeyMessage = nil
+
+        if hotKeyEnabled {
+            guard globalHotKeyController.register(shortcut: shortcut) else {
+                _ = globalHotKeyController.register(shortcut: previousShortcut)
+                hotKeyMessage = """
+                \(shortcut.displayLabel) is already used by macOS or another app.
+                """
+                return
+            }
+        }
+
+        hotKeyShortcut = shortcut
+        saveHotKeyShortcut()
     }
 
-    func setHotKeyKey(_ key: HotKeyKey) {
-        updateHotKey(modifier: hotKeyModifier, key: key)
+    func clearHotKey() {
+        globalHotKeyController.unregister()
+        hotKeyEnabled = false
+        save(false, for: Keys.hotKeyEnabled)
+        hotKeyMessage = "Shortcut cleared. Turn Global shortcut on to record another."
+    }
+
+    func setHotKeyMessage(_ message: String?) {
+        hotKeyMessage = message
     }
 
     func resetSettings() {
         colorHex = "#FF3B30"
         cursorColorHex = "#000000"
-        ringEnabled = true
+        ringVisibility = .onClick
         ringDiameter = 44
         ringThickness = 4
         cursorScale = 1.65
         clickEffect = .ripple
         soundEnabled = true
         soundVolume = 0.28
-        soundStyle = .systemTick
+        soundStyle = .mouseClick
         kineticEnabled = false
-        statusMessage = "Appearance, motion, and click settings were reset."
+        hotKeyShortcut = .defaultShortcut
+        saveHotKeyShortcut()
+        if hotKeyEnabled {
+            _ = globalHotKeyController.register(shortcut: hotKeyShortcut)
+        }
+        statusMessage = "Appearance, motion, click, and shortcut settings were reset."
     }
 
     func previewClickSound() {
@@ -374,45 +439,24 @@ final class AppState: ObservableObject {
     private func configureGlobalHotKey() {
         guard hotKeyEnabled else { return }
 
-        if !globalHotKeyController.register(
-            modifier: hotKeyModifier,
-            key: hotKeyKey
-        ) {
+        if !globalHotKeyController.register(shortcut: hotKeyShortcut) {
             hotKeyEnabled = false
             save(false, for: Keys.hotKeyEnabled)
             hotKeyMessage = """
             \(hotKeyLabel) is already used by macOS or another app. \
-            Choose a different shortcut.
+            Record a different shortcut.
             """
         }
     }
 
-    private func updateHotKey(modifier: HotKeyModifier, key: HotKeyKey) {
-        let previousModifier = hotKeyModifier
-        let previousKey = hotKeyKey
-        hotKeyMessage = nil
-
-        if hotKeyEnabled {
-            guard globalHotKeyController.register(
-                modifier: modifier,
-                key: key
-            ) else {
-                _ = globalHotKeyController.register(
-                    modifier: previousModifier,
-                    key: previousKey
-                )
-                hotKeyMessage = """
-                \(modifier.symbol)\(key.label) is already used by macOS or \
-                another app.
-                """
-                return
-            }
+    private func saveHotKeyShortcut() {
+        save(Int(hotKeyShortcut.keyCode), for: Keys.hotKeyKeyCode)
+        if let modifier = hotKeyShortcut.modifier {
+            save(modifier.rawValue, for: Keys.hotKeyModifier)
+        } else {
+            save("none", for: Keys.hotKeyModifier)
         }
-
-        hotKeyModifier = modifier
-        hotKeyKey = key
-        save(modifier.rawValue, for: Keys.hotKeyModifier)
-        save(key.rawValue, for: Keys.hotKeyKey)
+        save(hotKeyShortcut.keyLabel, for: Keys.hotKeyKeyLabel)
     }
 
     private func save(_ value: Any, for key: String) {

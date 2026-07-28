@@ -4,7 +4,7 @@
 
 > One cursor. Bigger, clearer, and impossible to miss.
 
-Screen Record Cursor is a focused screen-recording utility, not a presentation
+Screen Recording Cursor is a focused screen-recording utility, not a presentation
 effects suite. The paid value is one genuinely enlarged replacement cursor,
 expressive kinetic movement, and unmistakable click feedback.
 

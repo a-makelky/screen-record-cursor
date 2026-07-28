@@ -81,31 +81,31 @@ jobs:
             ./Scripts/build-app.sh
           EXPECTED_APP_VERSION="$APP_VERSION" \
             EXPECTED_APP_BUILD="$APP_BUILD" \
-            ./Scripts/verify-app.sh "$PWD/release/Screen Record Cursor.app"
-          architectures="$(lipo -archs "$PWD/release/Screen Record Cursor.app/Contents/MacOS/ScreenRecordCursor")"
+            ./Scripts/verify-app.sh "$PWD/release/Screen Recording Cursor.app"
+          architectures="$(lipo -archs "$PWD/release/Screen Recording Cursor.app/Contents/MacOS/ScreenRecordCursor")"
           test "$architectures" = "x86_64 arm64" || test "$architectures" = "arm64 x86_64"
       - name: Package release
         working-directory: release
         run: |
           ditto -c -k --sequesterRsrc --keepParent \
-            "Screen Record Cursor.app" \
-            "Screen-Record-Cursor-${RELEASE_VERSION}.zip"
-          shasum -a 256 "Screen-Record-Cursor-${RELEASE_VERSION}.zip" \
-            > "Screen-Record-Cursor-${RELEASE_VERSION}.sha256"
+            "Screen Recording Cursor.app" \
+            "Screen-Recording-Cursor-${RELEASE_VERSION}.zip"
+          shasum -a 256 "Screen-Recording-Cursor-${RELEASE_VERSION}.zip" \
+            > "Screen-Recording-Cursor-${RELEASE_VERSION}.sha256"
       - name: Publish GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           release_flags=()
-          release_title="Screen Record Cursor $RELEASE_VERSION"
+          release_title="Screen Recording Cursor $RELEASE_VERSION"
           if [[ "$RELEASE_VERSION" == *-* ]]; then
             release_flags+=(--prerelease)
             release_title="$release_title (Alpha)"
           fi
 
           gh release create "$RELEASE_VERSION" \
-            release/Screen-Record-Cursor-"$RELEASE_VERSION".zip \
-            release/Screen-Record-Cursor-"$RELEASE_VERSION".sha256 \
+            release/Screen-Recording-Cursor-"$RELEASE_VERSION".zip \
+            release/Screen-Recording-Cursor-"$RELEASE_VERSION".sha256 \
             --target "$GITHUB_SHA" \
             --generate-notes \
             --title "$release_title" \
