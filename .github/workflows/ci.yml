@@ -45,3 +45,35 @@ jobs:
         with:
           name: ScreenRecordCursor-${{ matrix.runner }}
           path: ScreenRecordCursor-${{ matrix.runner }}.zip
+
+  universal-preview:
+    needs:
+      - native
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download native builds
+        uses: actions/download-artifact@v4
+        with:
+          pattern: ScreenRecordCursor-macos-15*
+          path: packages
+          merge-multiple: true
+      - name: Create universal preview app
+        run: |
+          mkdir -p arm64 intel universal
+          ditto -x -k             "packages/ScreenRecordCursor-macos-15.zip"             arm64
+          ditto -x -k             "packages/ScreenRecordCursor-macos-15-intel.zip"             intel
+          cp -R             "arm64/Screen Recording Cursor.app"             "universal/Screen Recording Cursor.app"
+          lipo -create             "arm64/Screen Recording Cursor.app/Contents/MacOS/ScreenRecordCursor"             "intel/Screen Recording Cursor.app/Contents/MacOS/ScreenRecordCursor"             -output             "universal/Screen Recording Cursor.app/Contents/MacOS/ScreenRecordCursor"
+          chmod +x             "universal/Screen Recording Cursor.app/Contents/MacOS/ScreenRecordCursor"
+          codesign --force --deep --sign -             "universal/Screen Recording Cursor.app"
+          architectures="$(lipo -archs             "universal/Screen Recording Cursor.app/Contents/MacOS/ScreenRecordCursor")"
+          test "$architectures" = "x86_64 arm64" ||             test "$architectures" = "arm64 x86_64"
+          ./Scripts/verify-app.sh             "$PWD/universal/Screen Recording Cursor.app"
+          ditto -c -k --sequesterRsrc --keepParent             "universal/Screen Recording Cursor.app"             "Screen-Recording-Cursor-Design-Preview.zip"
+      - name: Upload universal preview
+        uses: actions/upload-artifact@v4
+        with:
+          name: ScreenRecordingCursor-universal-preview
+          path: Screen-Recording-Cursor-Design-Preview.zip
+          retention-days: 14
