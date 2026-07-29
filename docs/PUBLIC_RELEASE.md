@@ -18,9 +18,9 @@ The original kinetic cursor and the paid Store product now have separate homes:
 - `legacy/kinetic-windowserver` preserves the expressive rotating pointer at the
   reviewed Christina-feedback commit. It uses undocumented WindowServer
   behavior, is open source, unsupported, and distributed outside the Store.
-- `store/static-overlay` is the paid product path. It uses a fixed opaque pointer
-  overlay, leaves the native pointer active, uses only public APIs, and runs in
-  App Sandbox.
+- `store/static-overlay` is the paid product path. It uses one fixed custom
+  `NSCursor`, uses a separate overlay only for click feedback, relies on public
+  APIs, and runs in App Sandbox.
 
 Open source does not make the legacy mechanism supported or reliable. It only
 preserves the experiment without forcing private APIs into the paid product.
@@ -29,13 +29,14 @@ preserves the experiment without forcing private APIs into the paid product.
 
 The Store edition:
 
-1. Reads the public pointer position.
-2. Draws a fixed, opaque vector arrow at the native hotspot in a transparent,
-   click-through panel.
-3. Draws optional rings and click animations around that hotspot.
+1. Creates a fixed vector `NSCursor` through AppKit's public cursor-image API.
+2. Reasserts that cursor when a foreground app replaces it while Recording mode
+   is active.
+3. Reads the public pointer position only to place optional rings and click
+   animations in a transparent, click-through panel.
 4. Observes mouse-down events only while enabled so it can animate and play an
    optional bundled sound.
-5. Leaves the native pointer active at all times.
+5. Restores the most recently displaced cursor when Recording mode stops.
 6. Stores preferences in the app's sandbox container and makes no network
    connection.
 
@@ -57,7 +58,8 @@ universal executables are also scanned after signing.
 - [x] Private WindowServer controller removed
 - [x] Native cursor hide and restore dependency removed
 - [x] Kinetic model, state, controls, and tests removed
-- [x] Static opaque coverage pass retained
+- [x] Window-drawn pointer removed so two arrows cannot stack
+- [x] Public `NSCursor` artwork controller added
 - [x] App Sandbox entitlement added
 - [x] Privacy manifest added for app-only preferences and animation timing
 - [x] Distinct Store bundle identifier added
@@ -68,10 +70,11 @@ universal executables are also scanned after signing.
 
 ### Must be proven on real Macs
 
-- [ ] Ordinary native arrow is fully covered at supported sizes
-- [ ] I-beam, pointing hand, resize, and Accessibility cursors have acceptable
-      documented behavior
-- [ ] Descript, QuickTime, OBS, Loom, Zoom, and Teams capture the overlay
+- [ ] One custom cursor remains stable without flicker in supported apps
+- [ ] I-beam, pointing hand, resize, and Accessibility cursor areas have
+      acceptable documented behavior
+- [ ] Descript, QuickTime, OBS, Loom, Zoom, and Teams capture the custom cursor
+      plus the click-feedback overlay in supported modes
 - [ ] Global mouse-down monitoring works in a Store-signed sandbox
 - [ ] Click sound is included when the recorder captures computer audio
 - [ ] Global shortcut and Launch at Login work from TestFlight
@@ -92,13 +95,13 @@ universal executables are also scanned after signing.
 
 ## Recorder support boundary
 
-Full-display and region recording are the supported modes. Application-window
-capture can omit the overlay because it is a separate transparent window.
+Full-display and region recording are the supported modes for all effects.
+Application-window capture may include the custom cursor but omit the ring and
+click animations because those effects use a separate transparent window.
 
-Some recorders add the native cursor after capturing windows. Those recorders
-must allow their own cursor layer to be disabled. If the native cursor remains
-visible above the overlay, that recorder or cursor shape is not supported until
-the behavior can be fixed with public APIs.
+Some recorders substitute their own pointer during capture. Those recorders must
+allow that behavior to be disabled. A recorder is not supported until it records
+one custom cursor without adding a second arrow.
 
 ## Definition of paid-ready
 

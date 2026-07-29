@@ -17,7 +17,7 @@ cmp -s \
 entitlements_output="$(mktemp)"
 trap 'rm -f "$entitlements_output"' EXIT
 
-prohibited_pattern='CGDisplay(Hide|Show)Cursor|CGCursorIsVisible|SetsCursorInBackground|(^|[^A-Za-z0-9])_?CGS[A-Z_][A-Za-z0-9_]*|(^|[^A-Za-z0-9])_?SLS[A-Z_][A-Za-z0-9_]*|KineticCursorModel|KineticResponse|kineticEnabled|kineticResponse|rotationRadians|CGContextRotateCTM|CGAffineTransformRotate|/System/Library/PrivateFrameworks/'
+prohibited_pattern='CGDisplay(Hide|Show)Cursor|CGCursorIsVisible|CGWindowLevelForKey|SetsCursorInBackground|(^|[^A-Za-z0-9])_?CGS[A-Z_][A-Za-z0-9_]*|(^|[^A-Za-z0-9])_?SLS[A-Z_][A-Za-z0-9_]*|KineticCursorModel|KineticResponse|kineticEnabled|kineticResponse|rotationRadians|CGContextRotateCTM|CGAffineTransformRotate|/System/Library/PrivateFrameworks/'
 scanned_mach_o=0
 
 while IFS= read -r -d '' candidate; do

@@ -180,6 +180,7 @@ struct SettingsView: View {
                                             lineWidth: 1
                                         )
                                 }
+                                .contentShape(RoundedRectangle(cornerRadius: 6))
                         }
                         .buttonStyle(.plain)
                         .accessibilityLabel("Set cursor size to \(preset.label)")

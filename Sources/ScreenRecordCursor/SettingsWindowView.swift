@@ -449,6 +449,7 @@ struct SettingsWindowView: View {
                         lineWidth: isSelected ? 1.5 : 1
                     )
             }
+            .contentShape(RoundedRectangle(cornerRadius: 8))
         }
         .buttonStyle(.plain)
         .accessibilityLabel("\(effect.label) click effect")

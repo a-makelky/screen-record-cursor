@@ -81,7 +81,6 @@ final class CursorOverlayView: NSView {
                 clickOnly: !settings.ringVisibility.showsPersistentRing
             )
         }
-        drawCursor(at: hotspot)
     }
 
     private func drawPersistentRing(
@@ -135,39 +134,4 @@ final class CursorOverlayView: NSView {
         }
     }
 
-    private func drawCursor(at hotspot: CGPoint) {
-        guard let context = NSGraphicsContext.current?.cgContext else { return }
-
-        context.saveGState()
-        context.translateBy(x: hotspot.x, y: hotspot.y)
-        context.scaleBy(x: settings.cursorScale, y: settings.cursorScale)
-
-        let path = NSBezierPath()
-        path.move(to: CGPoint(x: 0, y: 0))
-        path.line(to: CGPoint(x: 0, y: -25))
-        path.line(to: CGPoint(x: 6.5, y: -19))
-        path.line(to: CGPoint(x: 11.5, y: -31))
-        path.line(to: CGPoint(x: 17.2, y: -28.5))
-        path.line(to: CGPoint(x: 12.2, y: -16.5))
-        path.line(to: CGPoint(x: 21, y: -16.5))
-        path.close()
-
-        // Paint a wider opaque silhouette before the colored arrow. The Store
-        // edition leaves the native pointer active, so this fixed coverage pass
-        // masks the ordinary arrow without relying on private cursor APIs.
-        let outlineColor = settings.cursorColor.contrastingStrokeColor
-        outlineColor.setStroke()
-        path.lineJoinStyle = .round
-        path.lineWidth = 4.8 / settings.cursorScale
-        path.stroke()
-
-        settings.cursorColor.setFill()
-        path.fill()
-
-        outlineColor.withAlphaComponent(0.98).setStroke()
-        path.lineWidth = 1.8 / settings.cursorScale
-        path.stroke()
-
-        context.restoreGState()
-    }
 }

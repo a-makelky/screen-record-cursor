@@ -94,10 +94,10 @@ jobs:
             "$PWD/universal/Screen Recording Cursor.app"
           ditto -c -k --sequesterRsrc --keepParent \
             "universal/Screen Recording Cursor.app" \
-            "Screen-Recording-Cursor-Store-Overlay-Preview.zip"
+            "Screen-Recording-Cursor-Store-Cursor-Preview.zip"
       - name: Upload universal preview
         uses: actions/upload-artifact@v4
         with:
           name: ScreenRecordingCursor-universal-preview
-          path: Screen-Recording-Cursor-Store-Overlay-Preview.zip
+          path: Screen-Recording-Cursor-Store-Cursor-Preview.zip
           retention-days: 14

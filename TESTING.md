@@ -1,14 +1,16 @@
 # Release Testing
 
 CI proves that the app compiles, packages, uses App Sandbox, contains no private
-cursor symbols, and passes deterministic tests. It cannot prove that macOS and a
-recorder compose the static overlay correctly. Complete this matrix on real Macs
-before labeling a build stable.
+cursor symbols, and passes deterministic tests. It cannot prove that foreground
+apps preserve the public custom `NSCursor` or that recorders capture the cursor
+and click-feedback window correctly. Complete this matrix on real Macs before
+labeling a build stable.
 
 ## Safety lifecycle
 
-Start each case with Recording mode enabled. The custom overlay must disappear
-and the native cursor must remain usable after:
+Start each case with Recording mode enabled. The selected custom cursor and
+click-feedback overlay must disappear, and the correct macOS cursor must return,
+after:
 
 - [ ] Turning Recording mode off
 - [ ] Quitting from the menu-bar panel
@@ -25,7 +27,7 @@ After every case, relaunch the app and confirm Recording mode can start again.
 
 Record at least 60 seconds in each supported recorder:
 
-| Recorder | Full display | Region | Click sound | Native arrow covered |
+| Recorder | Full display | Region | Click sound | One custom cursor |
 |---|---|---|---|---|
 | Descript | [ ] | [ ] | [ ] | [ ] |
 | QuickTime Player | [ ] | [ ] | [ ] | [ ] |
@@ -34,9 +36,9 @@ Record at least 60 seconds in each supported recorder:
 | Zoom | [ ] | [ ] | [ ] | [ ] |
 | Teams | [ ] | [ ] | [ ] | [ ] |
 
-If a recorder independently adds the native pointer, disable its cursor option
-and record again. App-window-only capture is not a supported mode because the
-cursor is rendered in a separate transparent window.
+If a recorder substitutes its own pointer, disable that recorder option and
+record again. App-window-only capture may include the custom cursor but omit the
+ring and click effects because those effects use a separate transparent window.
 
 ## Displays and macOS behavior
 
@@ -51,9 +53,13 @@ cursor is rendered in a separate transparent window.
 - [ ] Menu bar and Dock
 - [ ] Light and dark desktop backgrounds
 - [ ] Dragging, scrolling, gestures, and right-click remain unaffected
-- [ ] Ordinary arrow is fully covered at every size preset
-- [ ] I-beam, pointing hand, and resize cursors have documented behavior
-- [ ] Enlarged macOS Accessibility cursors have documented behavior
+- [ ] Only one pointer is visible at every size preset
+- [ ] Chrome, Descript, Finder, and System Settings do not visibly flicker back
+      to another arrow during movement
+- [ ] I-beam, pointing hand, and resize areas have documented behavior while
+      Recording mode is active
+- [ ] The correct native cursor returns immediately when Recording mode stops
+- [ ] Enlarged macOS Accessibility cursor settings have documented behavior
 - [ ] The custom arrow never rotates
 
 ## First-run and daily controls
@@ -77,6 +83,9 @@ cursor is rendered in a separate transparent window.
 - [ ] Active menu-bar item keeps a bright-blue badge in light and dark menu bars
 - [ ] Off and active menu-bar states remain distinguishable in grayscale
 - [ ] Click effects include a distinct system icon and text label
+- [ ] Ripple, Blink, Both, and Off respond across their full rounded cards,
+      including the empty space beside each icon and label
+- [ ] Cursor-size pills respond across their full visible bounds
 - [ ] A failed global mouse monitor shows a warning while the cursor stays active
 - [ ] Launch at Login works after the app is moved to Applications
 - [ ] Launch at Login survives a reboot

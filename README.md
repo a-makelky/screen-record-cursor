@@ -9,7 +9,7 @@ connection. It is a native Swift and AppKit app with no third-party dependencies
 ## What it does
 
 - Shows the colored ring only while clicking by default, with Always and Off options
-- Adds a larger, high-contrast vector cursor at the native cursor hotspot
+- Uses one larger, high-contrast vector image as the current macOS cursor
 - Includes 10 preset colors and a full macOS color picker
 - Separately customizes the ring and cursor colors
 - Can hide the ring at rest while keeping click animation and audio feedback
@@ -23,7 +23,7 @@ connection. It is a native Swift and AppKit app with no third-party dependencies
   focused Settings window
 - Stores settings locally in `UserDefaults`
 
-The ring and cursor overlay never receive mouse events. Your clicks, drags,
+The click-feedback overlay never receives mouse events. Your clicks, drags,
 scrolling, and gestures continue to reach the app underneath.
 
 ## Requirements
@@ -85,15 +85,15 @@ The app will appear in the menu bar, not the Dock. Open it and turn on
 4. Enable computer audio if you want the selected click sound in the recording.
 5. Make a five-second test recording before the real take.
 
-A recorder that captures only one application window may omit the overlay
-because the overlay is a separate transparent macOS window.
+A recorder that captures only one application window may omit the ring and
+click effects because those use a separate transparent macOS window.
 
 ## How cursor enlargement works
 
-Recording mode leaves the native macOS pointer active and draws one larger,
-opaque vector arrow at the same hotspot. The fixed arrow includes an opaque
-coverage silhouette intended to mask the ordinary macOS arrow without calling
-private cursor APIs.
+Recording mode creates one larger vector `NSCursor` with AppKit's public
+cursor-image API. The colored arrow is the current macOS cursor, rather than a
+second window-drawn arrow beneath it. A separate click-through panel draws only
+the ring, ripple, and blink effects.
 
 This public-API architecture is sandboxed and does not capture the screen. It
 works alongside Descript, QuickTime, OBS, Zoom, Loom, and other recorders.
@@ -101,11 +101,13 @@ works alongside Descript, QuickTime, OBS, Zoom, Loom, and other recorders.
 The Store branch contains automated source and final-binary checks that reject
 private WindowServer symbols, cursor-hiding calls, and kinetic-only code.
 
-The masking result still requires real-Mac verification. I-beams, pointing
-hands, resize cursors, enlarged Accessibility cursors, and recorders that add
-their own cursor may expose the native pointer. Full-display and region capture
-are the supported recording modes. Application-window capture may omit the
-overlay because it is a separate transparent window.
+The public cursor still requires real-Mac verification. Foreground apps can
+replace the current cursor as it crosses text, links, and resize handles, so the
+app checks for that change and restores the selected cursor while Recording mode
+is active. The build must prove that this does not flicker or interfere with
+normal input. Full-display and region capture are the supported modes for the
+ring and click effects. Application-window capture may omit those effects
+because they remain a separate transparent window.
 
 ## Privacy
 
@@ -146,9 +148,9 @@ button in Privacy & Security. Do not disable Gatekeeper.
 
 The Store branch now uses only public cursor APIs, carries its App Sandbox
 entitlement and privacy manifest, and has automated Store source and binary
-gates. It is still a prototype until its static cursor masking, global mouse
-monitor, Launch at Login, accessibility, and recorder compatibility pass on
-Store-signed TestFlight builds and real Macs.
+gates. It is still a prototype until its public `NSCursor` replacement, global
+mouse monitor, Launch at Login, accessibility, and recorder compatibility pass
+on Store-signed TestFlight builds and real Macs.
 
 See [GOAL.md](GOAL.md) for the acceptance checklist.
 See [TESTING.md](TESTING.md) for the real-Mac release matrix and

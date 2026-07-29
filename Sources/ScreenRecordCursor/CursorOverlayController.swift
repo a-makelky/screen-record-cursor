@@ -16,6 +16,7 @@ final class CursorOverlayController {
     private var frameTimer: DispatchSourceTimer?
     private var clickMonitor: GlobalClickMonitor?
     private let soundPlayer = ClickSoundPlayer()
+    private let cursorController = StoreCursorController()
     private var lastPosition: CGPoint?
 
     init(
@@ -49,7 +50,7 @@ final class CursorOverlayController {
         panel.ignoresMouseEvents = true
         panel.hidesOnDeactivate = false
         panel.isReleasedWhenClosed = false
-        panel.level = CursorOverlayPanel.aboveSystemCursorLevel
+        panel.level = .screenSaver
         panel.collectionBehavior = [
             .canJoinAllSpaces,
             .fullScreenAuxiliary,
@@ -60,6 +61,7 @@ final class CursorOverlayController {
 
         self.panel = panel
         overlayView = view
+        cursorController.start(settings: settings)
         updateFrame()
         panel.orderFrontRegardless()
 
@@ -92,6 +94,7 @@ final class CursorOverlayController {
         clickMonitor?.stop()
         clickMonitor = nil
 
+        cursorController.stop()
         panel?.orderOut(nil)
         panel?.close()
         panel = nil
@@ -100,12 +103,17 @@ final class CursorOverlayController {
     }
 
     func refreshSettings() {
-        overlayView?.settings = settingsProvider()
+        let settings = settingsProvider()
+        overlayView?.settings = settings
+        if panel != nil {
+            cursorController.update(settings: settings)
+        }
     }
 
     private func updateFrame() {
         guard let panel, let overlayView else { return }
 
+        cursorController.reassertIfNeeded()
         let position = NSEvent.mouseLocation
         let timestamp = ProcessInfo.processInfo.systemUptime
         overlayView.advance(to: timestamp)
@@ -132,12 +140,6 @@ final class CursorOverlayController {
 }
 
 final class CursorOverlayPanel: NSPanel {
-    /// Keep the public-API overlay visible above ordinary app and system UI
-    /// windows. The native cursor remains active underneath.
-    static let aboveSystemCursorLevel = NSWindow.Level(
-        rawValue: Int(CGWindowLevelForKey(.cursorWindow)) + 1
-    )
-
     override var canBecomeKey: Bool { false }
     override var canBecomeMain: Bool { false }
 }

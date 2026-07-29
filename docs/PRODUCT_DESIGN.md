@@ -66,9 +66,10 @@ Dependent controls disappear when their parent feature is off.
 
 ## Store boundary
 
-The official $9.99 Mac App Store product is a static, public-API overlay utility.
-It never hides the native cursor and never records the screen. The opaque arrow
-is designed to cover the ordinary native arrow at the same hotspot.
+The official $9.99 Mac App Store product uses AppKit's public `NSCursor`
+image API for one static colored pointer. It never hides or covers a second
+pointer and never records the screen. A separate click-through overlay is used
+only for rings and click animations.
 
 The unsupported kinetic edition is frozen separately and is not part of Store
 product design.

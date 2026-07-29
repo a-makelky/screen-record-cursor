@@ -17,7 +17,7 @@ do
   fi
 done
 
-prohibited_pattern='CGDisplay(Hide|Show)Cursor|CGCursorIsVisible|SetsCursorInBackground|_?CGS[A-Z_][A-Za-z0-9_]*|SLS[A-Z_][A-Za-z0-9_]*|NativeCursorVisibilityController|dlopen|dlsym|@_silgen_name|/System/Library/PrivateFrameworks|KineticCursorModel|KineticResponse|kineticEnabled|kineticResponse|rotationRadians|rotate\(by:|rotate\(byDegrees:|rotate\(byRadians:|rotationEffect|rotation3DEffect|CGAffineTransform\(rotationAngle:|CATransform3DMakeRotation|CGContextRotateCTM'
+prohibited_pattern='CGDisplay(Hide|Show)Cursor|CGCursorIsVisible|CGWindowLevelForKey|SetsCursorInBackground|_?CGS[A-Z_][A-Za-z0-9_]*|SLS[A-Z_][A-Za-z0-9_]*|NativeCursorVisibilityController|aboveSystemCursorLevel|dlopen|dlsym|@_silgen_name|/System/Library/PrivateFrameworks|KineticCursorModel|KineticResponse|kineticEnabled|kineticResponse|rotationRadians|rotate\(by:|rotate\(byDegrees:|rotate\(byRadians:|rotationEffect|rotation3DEffect|CGAffineTransform\(rotationAngle:|CATransform3DMakeRotation|CGContextRotateCTM'
 
 if grep -R -nE \
   "$prohibited_pattern" \

@@ -10,7 +10,7 @@ purchase in the Mac App Store**.
 - [x] Menu-bar-only native macOS app
 - [x] Explicit Recording mode toggle
 - [x] Click-only ring by default, with Always and Off choices
-- [x] Enlarged opaque vector cursor
+- [x] Enlarged vector cursor
 - [x] Ten preset colors
 - [x] Native custom color picker
 - [x] Independent ring and cursor colors
@@ -43,7 +43,8 @@ purchase in the Mac App Store**.
 - [ ] QuickTime and OBS compatibility verified
 - [ ] Native Accessibility Inspector, VoiceOver, Voice Control, keyboard, and
       contrast matrix passes
-- [ ] Static overlay covers the ordinary arrow across supported recorders
+- [ ] Public custom cursor remains stable and records as one pointer across
+      supported apps and recorders
 - [ ] App Sandbox build passes on-device recording tests
 - [ ] Mac App Store archive, privacy manifest, listing, and TestFlight build pass
 
