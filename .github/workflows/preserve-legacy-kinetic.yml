@@ -1,0 +1,106 @@
+name: Preserve kinetic legacy release
+
+on:
+  push:
+    branches:
+      - store/static-overlay
+    paths:
+      - .github/kinetic-legacy-release
+
+permissions:
+  contents: write
+
+concurrency:
+  group: preserve-kinetic-legacy
+  cancel-in-progress: false
+
+env:
+  LEGACY_SHA: 8cb5a52550fee44d79dc060949752dbfbd8d1a3e
+  LEGACY_TAG: v0.1.0-kinetic.1
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-15
+            architecture: arm64
+          - runner: macos-15-intel
+            architecture: x86_64
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.LEGACY_SHA }}
+      - name: Test legacy source
+        run: swift test --parallel
+      - name: Build legacy executable
+        run: swift build -c release
+      - name: Stage executable
+        run: |
+          mkdir -p output
+          cp "$(swift build -c release --show-bin-path)/ScreenRecordCursor" \
+            "output/ScreenRecordCursor-${{ matrix.architecture }}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: legacy-executable-${{ matrix.architecture }}
+          path: output/ScreenRecordCursor-${{ matrix.architecture }}
+
+  package:
+    needs:
+      - build
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.LEGACY_SHA }}
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: legacy-executable-*
+          path: executables
+          merge-multiple: true
+      - name: Create universal legacy app
+        run: |
+          mkdir -p universal release
+          lipo -create \
+            executables/ScreenRecordCursor-arm64 \
+            executables/ScreenRecordCursor-x86_64 \
+            -output universal/ScreenRecordCursor
+          chmod +x universal/ScreenRecordCursor
+          SCREEN_RECORD_CURSOR_BINARY="$PWD/universal/ScreenRecordCursor" \
+            OUTPUT_DIR="$PWD/release" \
+            APP_VERSION="0.1.0" \
+            APP_BUILD="${{ github.run_number }}" \
+            ./Scripts/build-app.sh
+          ./Scripts/verify-app.sh \
+            "$PWD/release/Screen Recording Cursor.app"
+          architectures="$(
+            lipo -archs \
+              "$PWD/release/Screen Recording Cursor.app/Contents/MacOS/ScreenRecordCursor"
+          )"
+          test "$architectures" = "x86_64 arm64" || \
+            test "$architectures" = "arm64 x86_64"
+      - name: Package legacy release
+        working-directory: release
+        run: |
+          ditto -c -k --sequesterRsrc --keepParent \
+            "Screen Recording Cursor.app" \
+            "Screen-Recording-Cursor-${LEGACY_TAG}.zip"
+          shasum -a 256 "Screen-Recording-Cursor-${LEGACY_TAG}.zip" \
+            > "Screen-Recording-Cursor-${LEGACY_TAG}.sha256"
+      - name: Publish unsupported legacy prerelease
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "$LEGACY_TAG" >/dev/null 2>&1; then
+            echo "Legacy release already exists."
+            exit 0
+          fi
+          gh release create "$LEGACY_TAG" \
+            release/Screen-Recording-Cursor-"$LEGACY_TAG".zip \
+            release/Screen-Recording-Cursor-"$LEGACY_TAG".sha256 \
+            --target "$LEGACY_SHA" \
+            --prerelease \
+            --title "Screen Recording Cursor $LEGACY_TAG: Unsupported Legacy Edition" \
+            --notes "Experimental and unsupported. This edition uses undocumented macOS WindowServer behavior, is not eligible for the Mac App Store, and may break after a macOS update."
