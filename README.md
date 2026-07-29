@@ -15,12 +15,11 @@ connection. It is a native Swift and AppKit app with no third-party dependencies
 - Can hide the ring at rest while keeping click animation and audio feedback
 - Shows a ripple, ring blink, both, or no effect on mouse-down
 - Offers five bundled WAV click sounds, from mouse clicks to playful pops
-- Offers an optional kinetic cursor whose tail swings behind its motion
 - Includes a guided first-run cursor test and Launch at Login
 - Toggles Recording mode globally with a customizable two-key shortcut
-- Puts color, size, click ring, click feedback, sound mute, and kinetic mode in a
-  compact daily-control panel
-- Keeps precise appearance, sound, motion, startup, and shortcut controls in a
+- Puts color, size, click ring, click feedback, and sound mute in a compact
+  daily-control panel
+- Keeps precise appearance, sound, startup, and shortcut controls in a
   focused Settings window
 - Stores settings locally in `UserDefaults`
 
@@ -34,17 +33,31 @@ scrolling, and gestures continue to reach the app underneath.
 - A screen recorder configured for full-display or region capture
 - System or computer audio capture enabled if you want the click sound recorded
 
-## Install the alpha
+## Editions
 
-1. Open the repository's [Releases](https://github.com/a-makelky/screen-record-cursor/releases)
-   page and choose the newest alpha release.
-2. Download the file named `Screen-Recording-Cursor-*.zip` under **Assets**. Do not
-   download GitHub's automatically generated **Source code** archives.
+The project has two intentionally separate editions:
+
+- `store/static-overlay` is the active Mac App Store development branch. It uses
+  public APIs, runs in App Sandbox, and keeps the pointer static.
+- `legacy/kinetic-windowserver` preserves the experimental rotating cursor. It
+  uses undocumented macOS behavior, is unsupported, and will not be submitted
+  to the Mac App Store.
+
+Kinetic motion is not part of the paid Store product.
+
+Before installing the Store preview, turn off Launch at Login in the legacy
+edition and quit it. The editions use different bundle identifiers, but they
+share a display name and should not run at the same time.
+
+## Install a development preview
+
+1. Open the latest successful CI run for the `store/static-overlay` branch.
+2. Download the `ScreenRecordingCursor-universal-preview` artifact.
 3. Unzip the download and move **Screen Recording Cursor.app** to Applications.
 4. Control-click the app, choose **Open**, and confirm the first launch.
 5. Use the menu-bar icon to turn on **Recording mode**.
 
-Alpha builds are ad-hoc signed but not yet notarized. If macOS blocks the first
+Preview builds are ad-hoc signed but not yet notarized. If macOS blocks the first
 launch, open **System Settings → Privacy & Security** and choose **Open Anyway**.
 Do not disable Gatekeeper.
 
@@ -77,40 +90,22 @@ because the overlay is a separate transparent macOS window.
 
 ## How cursor enlargement works
 
-Recording mode hides the native macOS pointer and draws one high-contrast vector
-cursor at the exact native hotspot. This avoids the unreliable cursor-over-cursor
-compositing that can expose the small system pointer inside the enlarged arrow.
+Recording mode leaves the native macOS pointer active and draws one larger,
+opaque vector arrow at the same hotspot. The fixed arrow includes an opaque
+coverage silhouette intended to mask the ordinary macOS arrow without calling
+private cursor APIs.
 
-Apple's public Quartz cursor visibility API normally requires the foreground
-application. Because Screen Recording Cursor is a background menu-bar app, it
-dynamically uses the longstanding WindowServer `SetsCursorInBackground`
-connection property, then makes one balanced `CGDisplayHideCursor` request. A
-watchdog repairs the hide request if Dock or WindowServer activity makes the
-native pointer visible. Turning Recording mode off or quitting the app restores
-the native cursor.
+This public-API architecture is sandboxed and does not capture the screen. It
+works alongside Descript, QuickTime, OBS, Zoom, Loom, and other recorders.
 
-`SetsCursorInBackground` is an undocumented macOS implementation detail, so the
-current development build is not eligible for the Mac App Store. It is a test
-vehicle while a public-API recording engine is developed for the official
-$9.99 Mac App Store release. This binary must never be submitted to App Review.
+The Store branch contains automated source and final-binary checks that reject
+private WindowServer symbols, cursor-hiding calls, and kinetic-only code.
 
-The private symbols are resolved at runtime. If Apple removes them, the app
-still launches and reports the unsupported condition instead of crashing.
-
-Some recorders independently add a native cursor after capturing the screen. If
-a finished recording still contains a second cursor, turn off that recorder's
-cursor setting and let Screen Recording Cursor provide the visible pointer.
-
-## Kinetic cursor
-
-Kinetic mode samples the real cursor position at about 60 Hz. The arrow rotates
-around its point until its tail trails opposite the movement direction. The ring
-and click hotspot remain fixed to the actual pointer position, so the stronger
-visual effect does not make clicks inaccurate. Smooth is the default motion
-response, with Balanced and Quick choices in Settings.
-
-The motion model is isolated in `CursorCore` and covered by deterministic unit
-tests.
+The masking result still requires real-Mac verification. I-beams, pointing
+hands, resize cursors, enlarged Accessibility cursors, and recorders that add
+their own cursor may expose the native pointer. Full-display and region capture
+are the supported recording modes. Application-window capture may omit the
+overlay because it is a separate transparent window.
 
 ## Privacy
 
@@ -139,9 +134,9 @@ make verify
 ```
 
 GitHub Actions compiles and tests the app on Apple Silicon and Intel macOS
-runners. Stable tags such as `v1.0.0` create a release. Prerelease tags such as
-`v0.1.0-alpha.1` create an alpha prerelease. Both contain one ad-hoc signed
-universal app for Apple Silicon and Intel Macs.
+runners. CI branch builds contain one short-lived, ad-hoc signed universal
+preview. The Store branch does not publish stable GitHub releases; paid
+distribution will use App Store Connect after the archive lane is ready.
 
 Ad-hoc signing does not provide Apple notarization. On a downloaded development
 release, Control-click the app and choose **Open**, or use the **Open Anyway**
@@ -149,10 +144,11 @@ button in Privacy & Security. Do not disable Gatekeeper.
 
 ## Project status
 
-The source includes the complete first working implementation and automated
-native build pipeline. Runtime verification still needs to be completed on real
-Mac hardware with Descript, QuickTime, OBS, Retina displays, and multi-display
-setups before the project is labeled stable.
+The Store branch now uses only public cursor APIs, carries its App Sandbox
+entitlement and privacy manifest, and has automated Store source and binary
+gates. It is still a prototype until its static cursor masking, global mouse
+monitor, Launch at Login, accessibility, and recorder compatibility pass on
+Store-signed TestFlight builds and real Macs.
 
 See [GOAL.md](GOAL.md) for the acceptance checklist.
 See [TESTING.md](TESTING.md) for the real-Mac release matrix and

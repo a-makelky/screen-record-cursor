@@ -48,8 +48,6 @@ final class AppState: ObservableObject {
     @Published private(set) var hotKeyEnabled: Bool
     @Published private(set) var hotKeyShortcut: HotKeyShortcut
     @Published private(set) var hotKeyMessage: String?
-    @Published private(set) var reduceMotionEnabled =
-        NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
 
     @Published var colorHex: String {
         didSet {
@@ -127,20 +125,6 @@ final class AppState: ObservableObject {
         }
     }
 
-    @Published var kineticEnabled: Bool {
-        didSet {
-            save(kineticEnabled, for: Keys.kineticEnabled)
-            overlayController.refreshSettings()
-        }
-    }
-
-    @Published var kineticResponse: KineticResponse {
-        didSet {
-            save(kineticResponse.rawValue, for: Keys.kineticResponse)
-            overlayController.refreshSettings()
-        }
-    }
-
     private let defaults = UserDefaults.standard
     private let launchAtLoginController = LaunchAtLoginController()
     private lazy var globalHotKeyController = GlobalHotKeyController {
@@ -162,8 +146,6 @@ final class AppState: ObservableObject {
         static let soundEnabled = "soundEnabled"
         static let soundVolume = "soundVolume"
         static let soundStyle = "soundStyle"
-        static let kineticEnabled = "kineticEnabled"
-        static let kineticResponse = "kineticResponse"
         static let hasCompletedOnboarding = "hasCompletedOnboarding"
         static let hotKeyEnabled = "hotKeyEnabled"
         static let hotKeyModifier = "hotKeyModifier"
@@ -182,8 +164,6 @@ final class AppState: ObservableObject {
             Keys.soundEnabled: true,
             Keys.soundVolume: 0.28,
             Keys.soundStyle: ClickSoundStyle.mouseClick.rawValue,
-            Keys.kineticEnabled: false,
-            Keys.kineticResponse: KineticResponse.smooth.rawValue,
             Keys.hotKeyEnabled: true,
             Keys.hotKeyModifier: HotKeyModifier.control.rawValue,
             Keys.hotKeyKeyCode: Int(HotKeyShortcut.defaultShortcut.keyCode),
@@ -220,10 +200,6 @@ final class AppState: ObservableObject {
         soundStyle = ClickSoundStyle(
             rawValue: defaults.string(forKey: Keys.soundStyle) ?? ""
         ) ?? .mouseClick
-        kineticEnabled = defaults.bool(forKey: Keys.kineticEnabled)
-        kineticResponse = KineticResponse(
-            rawValue: defaults.string(forKey: Keys.kineticResponse) ?? ""
-        ) ?? .smooth
         hasCompletedOnboarding = defaults.bool(
             forKey: Keys.hasCompletedOnboarding
         )
@@ -244,9 +220,7 @@ final class AppState: ObservableObject {
                     ringDiameter: 44,
                     ringThickness: 4,
                     cursorScale: 1.5,
-                    clickEffect: .ripple,
-                    kineticEnabled: false,
-                    kineticResponse: .smooth
+                    clickEffect: .ripple
                 )
             },
             clickSoundProvider: { [weak self] in
@@ -280,9 +254,7 @@ final class AppState: ObservableObject {
             ringDiameter: ringDiameter,
             ringThickness: ringThickness,
             cursorScale: cursorScale,
-            clickEffect: clickEffect,
-            kineticEnabled: kineticEnabled && !reduceMotionEnabled,
-            kineticResponse: kineticResponse
+            clickEffect: clickEffect
         )
     }
 
@@ -291,14 +263,15 @@ final class AppState: ObservableObject {
 
         if enabled {
             statusMessage = nil
-            guard overlayController.start() else {
-                statusMessage = """
-                Recording mode could not hide the native macOS cursor. \
-                Your normal cursor was restored.
-                """
-                return
-            }
+            let result = overlayController.start()
             isActive = true
+
+            if !result.clickMonitoringAvailable {
+                statusMessage = """
+                The enhanced cursor is on, but macOS did not allow click \
+                feedback or click sounds.
+                """
+            }
         } else {
             overlayController.stop()
             isActive = false
@@ -320,15 +293,6 @@ final class AppState: ObservableObject {
 
     func dismissStatusMessage() {
         statusMessage = nil
-    }
-
-    func refreshAccessibilityDisplayOptions() {
-        let shouldReduceMotion =
-            NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
-        guard shouldReduceMotion != reduceMotionEnabled else { return }
-
-        reduceMotionEnabled = shouldReduceMotion
-        overlayController.refreshSettings()
     }
 
     func setLaunchAtLogin(_ enabled: Bool) {
@@ -436,19 +400,17 @@ final class AppState: ObservableObject {
         soundEnabled = true
         soundVolume = 0.28
         soundStyle = .mouseClick
-        kineticEnabled = false
-        kineticResponse = .smooth
         hotKeyShortcut = .defaultShortcut
         saveHotKeyShortcut()
         if hotKeyEnabled {
             _ = globalHotKeyController.register(shortcut: hotKeyShortcut)
         }
-        statusMessage = "Appearance, motion, click, and shortcut settings were reset."
+        statusMessage = "Appearance, click, and shortcut settings were reset."
     }
 
     func stopForSystemTransition() {
         stopForSafety(
-            message: "Recording mode was turned off to restore your cursor before sleep or user switching."
+            message: "The enhanced cursor was turned off before sleep or user switching."
         )
     }
 

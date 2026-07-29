@@ -14,7 +14,6 @@ The menu-bar popover is the quick-fix surface. It contains:
 3. Cursor size presets
 4. Click ring visibility
 5. Click effect and sound mute
-6. Kinetic cursor on or off
 
 These controls are interactive. The popover does not use passive summary rows or
 per-row drill-down arrows. One Settings entry opens every advanced control.
@@ -25,7 +24,6 @@ The Settings window contains:
 
 - Full cursor and click-ring palettes
 - Precise cursor, ring size, and ring weight sliders
-- Smooth, Balanced, and Quick kinetic motion choices
 - Click sound library and volume
 - Launch at Login, global shortcut, support, and reset
 
@@ -37,8 +35,6 @@ Dependent controls disappear when their parent feature is off.
 - Cursor size: 1.5×
 - Click effect: Ripple
 - Click sound: Mouse Click
-- Kinetic cursor: Off
-- Kinetic motion: Smooth
 - Appearance: Follow macOS light or dark mode
 
 ## Interaction and accessibility rules
@@ -55,7 +51,6 @@ Dependent controls disappear when their parent feature is off.
 - Keep the first-run screen to one benefit statement, one sentence, one primary
   action, and one defer action.
 - Preserve sufficient contrast in light mode, dark mode, and Increase Contrast.
-- Pause kinetic motion whenever macOS Reduce Motion is enabled.
 
 ## Decisions intentionally deferred
 
@@ -71,6 +66,9 @@ Dependent controls disappear when their parent feature is off.
 
 ## Store boundary
 
-The current private WindowServer cursor-hiding engine is for development testing
-only. The official $9.99 Mac App Store product requires a separate, public-API,
-sandboxed recording engine. UI progress does not remove that release gate.
+The official $9.99 Mac App Store product is a static, public-API overlay utility.
+It never hides the native cursor and never records the screen. The opaque arrow
+is designed to cover the ordinary native arrow at the same hotspot.
+
+The unsupported kinetic edition is frozen separately and is not part of Store
+product design.

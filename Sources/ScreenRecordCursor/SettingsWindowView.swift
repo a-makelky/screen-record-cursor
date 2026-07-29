@@ -77,7 +77,7 @@ struct SettingsWindowView: View {
         VStack(alignment: .leading, spacing: 14) {
             heading(
                 "Cursor",
-                subtitle: "Adjust the pointer, click ring, and optional motion."
+                subtitle: "Adjust the pointer and click ring."
             )
 
             settingsCard(title: "Pointer") {
@@ -94,37 +94,6 @@ struct SettingsWindowView: View {
                     range: 1.1...3,
                     valueLabel: String(format: "%.1f×", state.cursorScale)
                 )
-                Toggle("Kinetic cursor", isOn: $state.kineticEnabled)
-
-                if state.kineticEnabled {
-                    HStack(spacing: 12) {
-                        Text("Motion")
-                            .font(.callout)
-                            .foregroundStyle(.secondary)
-
-                        Spacer()
-
-                        Picker("Motion", selection: $state.kineticResponse) {
-                            ForEach(KineticResponse.allCases) { response in
-                                Text(response.label).tag(response)
-                            }
-                        }
-                        .labelsHidden()
-                        .pickerStyle(.segmented)
-                        .frame(width: 260)
-                        .accessibilityLabel("Kinetic cursor motion")
-                        .accessibilityValue(state.kineticResponse.label)
-                    }
-
-                    if state.reduceMotionEnabled {
-                        Text(
-                            "Kinetic motion is paused because Reduce Motion is enabled in macOS."
-                        )
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                }
             }
 
             settingsCard {

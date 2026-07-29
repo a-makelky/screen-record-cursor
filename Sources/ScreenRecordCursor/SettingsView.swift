@@ -205,7 +205,10 @@ struct SettingsView: View {
                 .accessibilityValue(state.ringVisibility.label)
             }
 
-            quickControlRow(title: "Click feedback") {
+            quickControlRow(
+                title: "Click feedback",
+                showsDivider: false
+            ) {
                 HStack(spacing: 8) {
                     Menu {
                         ForEach(availableClickEffects) { effect in
@@ -251,29 +254,6 @@ struct SettingsView: View {
                 }
             }
 
-            quickControlRow(
-                title: "Kinetic cursor",
-                showsDivider: false
-            ) {
-                Toggle("", isOn: $state.kineticEnabled)
-                    .labelsHidden()
-                    .toggleStyle(.switch)
-                    .accessibilityLabel("Kinetic cursor")
-                    .accessibilityValue(
-                        state.kineticEnabled
-                            ? (
-                                state.reduceMotionEnabled
-                                    ? "On, paused by Reduce Motion"
-                                    : "On"
-                            )
-                            : "Off"
-                    )
-                    .help(
-                        state.reduceMotionEnabled
-                            ? "Kinetic motion is paused while Reduce Motion is enabled"
-                            : "Turn kinetic cursor motion on or off"
-                    )
-            }
         }
     }
 

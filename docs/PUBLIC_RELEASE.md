@@ -2,134 +2,118 @@
 
 ## Product promise
 
-> One cursor. Bigger, clearer, and impossible to miss.
+Make the pointer bigger and easier to follow in screen recordings without
+forcing people to change recording software.
 
-Screen Recording Cursor is a focused screen-recording utility, not a presentation
-effects suite. The paid value is one genuinely enlarged replacement cursor,
-expressive kinetic movement, and unmistakable click feedback.
+Screen Recording Cursor remains a focused menu-bar utility. It does not record
+the screen, capture audio, upload data, add annotations, or become a presentation
+suite.
 
-Target price: **$9.99 one-time purchase**.
+Target price: **$9.99 one-time purchase in the Mac App Store**.
 
-## Distribution decision
+## Two-edition decision
 
-The official paid release is a **$9.99 one-time purchase in the Mac App Store**.
-Direct downloads are limited to development previews until the Store build is
-ready.
+The original kinetic cursor and the paid Store product now have separate homes:
 
-The current single-cursor implementation uses the undocumented
-`SetsCursorInBackground` WindowServer connection property so a background
-menu-bar utility can hide the native cursor. This behavior is isolated in
-`NativeCursorVisibilityController`, but it is not eligible for Mac App Store
-submission.
+- `legacy/kinetic-windowserver` preserves the expressive rotating pointer at the
+  reviewed Christina-feedback commit. It uses undocumented WindowServer
+  behavior, is open source, unsupported, and distributed outside the Store.
+- `store/static-overlay` is the paid product path. It uses a fixed opaque pointer
+  overlay, leaves the native pointer active, uses only public APIs, and runs in
+  App Sandbox.
 
-WindowServer is a macOS process on the user's own Mac, not a Microsoft Windows
-server and not a remote service. The problem is not locality. The problem is
-that the development build calls implementation details Apple does not publish
-for third-party apps and may change without notice.
+Open source does not make the legacy mechanism supported or reliable. It only
+preserves the experiment without forcing private APIs into the paid product.
 
-Never submit the current development binary to App Review. The Store build must
-use public APIs, run in App Sandbox, and preserve the product's central promise
-of one clear, enlarged cursor. A weaker ring-only Store edition is not the goal.
+## Store architecture
 
-## Recommended engine split
+The Store edition:
 
-Keep one shared interface and cursor-rendering model, then separate the behavior
-behind it:
+1. Reads the public pointer position.
+2. Draws a fixed, opaque vector arrow at the native hotspot in a transparent,
+   click-through panel.
+3. Draws optional rings and click animations around that hotspot.
+4. Observes mouse-down events only while enabled so it can animate and play an
+   optional bundled sound.
+5. Leaves the native pointer active at all times.
+6. Stores preferences in the app's sandbox container and makes no network
+   connection.
 
-- **Development preview engine:** the current system-wide overlay and private
-  background cursor control, used only for testing the product experience.
-- **Mac App Store engine:** a local ScreenCaptureKit recorder that excludes the
-  system cursor from captured frames, composites the custom cursor and click
-  feedback into those frames, and writes the finished recording to a
-  user-selected file.
+The Store branch permanently rejects:
 
-The Store engine preserves local processing, privacy, the kinetic cursor, click
-feedback, and the $9.99 one-time purchase. Its unavoidable product difference is
-that the enhanced cursor appears in recordings made through Screen Recording
-Cursor; public macOS APIs do not currently provide a supported way for a
-background App Store utility to replace the pointer globally in every app.
+- Private `CGS` and `SLS` WindowServer symbols
+- `SetsCursorInBackground`
+- Native cursor hide and show calls
+- The kinetic rotation model and settings
+- Network client and server entitlements
 
-## Milestones
+Source validation runs before native CI. The final Apple Silicon, Intel, and
+universal executables are also scanned after signing.
 
-### 1. Release safety and daily controls
+## Current status
 
-- [x] Refuse activation when the native cursor cannot be hidden
-- [x] Restore the cursor on quit and explicit deactivation
-- [x] Restore the cursor on sleep, screen sleep, user switching, and display change
-- [x] First-run recording test and local-only explanation
-- [x] Launch at Login
-- [x] Version, support, and reset controls
-- [x] User-configurable two-key global Recording mode shortcut
-- [ ] Complete the real-Mac safety matrix in `TESTING.md`
+### Complete in source
 
-### 2. Focused product experience
+- [x] Private WindowServer controller removed
+- [x] Native cursor hide and restore dependency removed
+- [x] Kinetic model, state, controls, and tests removed
+- [x] Static opaque coverage pass retained
+- [x] App Sandbox entitlement added
+- [x] Privacy manifest added for app-only preferences and animation timing
+- [x] Distinct Store bundle identifier added
+- [x] Failed global click monitoring produces a visible warning
+- [x] Public-API and kinetic source scanner added
+- [x] Final-binary and entitlement validator added
+- [x] Apple Silicon, Intel, and universal preview CI updated
 
-- [x] Click ring visibility: On Click, Always, and Off
-- [x] Independent ring and cursor colors
-- [x] Five selectable local click sounds
-- [x] Interactive daily controls in the menu-bar popover
-- [x] Precise controls behind one Settings entry
-- [x] Visual labels for Ripple, Blink, Both, and Off
-- [x] Kinetic cursor at the top level with motion presets in Settings
-- [x] Persistent bright-blue active menu-bar status indicator
-- [ ] Final distinctive menu-bar and app artwork
-- [ ] Validate the default cursor, ring, sound, and motion with beta users
+### Must be proven on real Macs
 
-Defer spotlight, trails, keystroke display, annotations, magnifier, uploaded
-sounds, accounts, cloud sync, subscriptions, AI, and effects marketplaces.
+- [ ] Ordinary native arrow is fully covered at supported sizes
+- [ ] I-beam, pointing hand, resize, and Accessibility cursors have acceptable
+      documented behavior
+- [ ] Descript, QuickTime, OBS, Loom, Zoom, and Teams capture the overlay
+- [ ] Global mouse-down monitoring works in a Store-signed sandbox
+- [ ] Click sound is included when the recorder captures computer audio
+- [ ] Global shortcut and Launch at Login work from TestFlight
+- [ ] Retina, mixed-scale, multiple-display, Spaces, and full-screen alignment pass
+- [ ] VoiceOver, Voice Control, Full Keyboard Access, and Accessibility Inspector pass
 
-### 3. Public-API App Store engine
+### Packaging still required
 
-- [ ] Build a sandboxed ScreenCaptureKit prototype
-- [ ] Capture without the system cursor
-- [ ] Composite the custom cursor at the exact recorded hotspot
-- [ ] Preserve click feedback, click sound, and kinetic motion
-- [ ] Verify video quality, performance, audio sync, and multi-display behavior
-- [ ] Scan the Store binary for private CGS/SLS symbols
-- [ ] Decide the final recording workflow only after the prototype is tested
+- [ ] Create an Xcode Mac app target and Store archive scheme
+- [ ] Add final AppIcon asset catalog and production artwork
+- [ ] Configure distribution signing and provisioning
+- [ ] Add a GitHub tag ruleset so paid Store tags cannot target legacy commits
+- [ ] Validate the archive and upload a TestFlight build
+- [ ] Confirm `get-task-allow` is absent or false in the archive
+- [ ] Store commercial license receipts for all five click sounds
+- [ ] Publish privacy, support, compatibility, refund, and troubleshooting pages
+- [ ] Configure the app as a $9.99 paid download in App Store Connect
 
-This is a product boundary as well as an engineering task. A ScreenCaptureKit
-edition records or exports content rather than changing the system cursor
-globally. Validate that workflow with creators before replacing the development
-engine.
+## Recorder support boundary
 
-### 4. Mac App Store packaging
+Full-display and region recording are the supported modes. Application-window
+capture can omit the overlay because it is a separate transparent window.
 
-- [ ] Separate Store target with App Sandbox
-- [ ] Mac App Store distribution signing and archive validation
-- [ ] `PrivacyInfo.xcprivacy` with required-reason API declarations
-- [ ] Final app icon, screenshots, description, keywords, and support URL
-- [ ] Privacy, support, refund, and troubleshooting pages
-- [ ] Configure the app itself as a $9.99 paid download in App Store Connect
-- [ ] TestFlight build installs and records on a clean Mac
-
-### 5. TestFlight beta
-
-- [ ] Recruit 10–20 screen-recording creators and educators
-- [ ] Collect macOS version, Mac model, display details, and recording workflow
-- [ ] Resolve every cursor-restoration or recording failure
-- [ ] Verify Retina, non-Retina, and mixed-scale displays
-- [ ] Confirm first-use understanding, menu hierarchy, and default settings
-- [ ] Complete `docs/ACCESSIBILITY.md` on a real Mac with Accessibility
-      Inspector, VoiceOver, Voice Control, and Full Keyboard Access
-- [ ] Collect permission to use five specific customer quotes
-
-### 6. Paid Mac App Store launch
-
-- [ ] Publish a before/after demo and a 60-second setup video
-- [ ] Submit the $9.99 build to App Review
-- [ ] Document supported recording and export modes
-- [ ] Provide Educator Access without creating a second binary
-- [ ] Create a support-response and refund routine
+Some recorders add the native cursor after capturing windows. Those recorders
+must allow their own cursor layer to be disabled. If the native cursor remains
+visible above the overlay, that recorder or cursor shape is not supported until
+the behavior can be fixed with public APIs.
 
 ## Definition of paid-ready
 
 A release is ready to charge for only when:
 
-- The shipped binary uses public APIs and contains no private WindowServer calls.
-- App Sandbox, archive validation, TestFlight installation, and App Review pass.
-- Recording never leaves the user without a normal system cursor.
+- The archived binary uses public APIs and passes the source, binary, entitlement,
+  privacy-manifest, archive, and TestFlight gates.
+- App Sandbox is enabled with no unnecessary capability.
+- The supported cursor shapes look like one clear pointer in every advertised
+  recorder and capture mode.
+- Click feedback, sound, shortcut, Launch at Login, and settings work from a clean
+  TestFlight installation.
 - Apple Silicon and Intel pass automated and real-device verification.
-- A buyer can pay, install, understand, and make a first recording in under five
-  minutes.
-- Privacy, support, compatibility, and refund expectations are easy to find.
+- The app passes the native accessibility matrix.
+- A buyer can install, understand, and make a supported first recording in under
+  five minutes.
+- Privacy, support, compatibility, refund, and unsupported-case expectations are
+  easy to find.

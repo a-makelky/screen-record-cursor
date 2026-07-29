@@ -6,6 +6,7 @@ configuration="${CONFIGURATION:-release}"
 app_name="Screen Recording Cursor.app"
 output_root="${OUTPUT_DIR:-"$project_root/.build/app"}"
 app_path="$output_root/$app_name"
+entitlements_path="$project_root/Resources/ScreenRecordCursor.entitlements"
 
 if [[ -n "${SCREEN_RECORD_CURSOR_BINARY:-}" ]]; then
   binary_path="$SCREEN_RECORD_CURSOR_BINARY"
@@ -29,6 +30,8 @@ rm -rf "$app_path"
 mkdir -p "$app_path/Contents/MacOS" "$app_path/Contents/Resources"
 cp "$binary_path" "$app_path/Contents/MacOS/ScreenRecordCursor"
 cp "$project_root/Resources/Info.plist" "$app_path/Contents/Info.plist"
+cp "$project_root/Resources/PrivacyInfo.xcprivacy" \
+  "$app_path/Contents/Resources/PrivacyInfo.xcprivacy"
 cp -R "$project_root/Resources/Sounds" "$app_path/Contents/Resources/Sounds"
 
 if [[ -n "${APP_VERSION:-}" ]]; then
@@ -44,8 +47,12 @@ if [[ -n "${APP_BUILD:-}" ]]; then
 fi
 
 if command -v codesign >/dev/null 2>&1; then
-  codesign --force --sign - "$app_path/Contents/MacOS/ScreenRecordCursor"
-  codesign --force --sign - "$app_path"
+  code_sign_identity="${CODE_SIGN_IDENTITY:--}"
+  codesign \
+    --force \
+    --sign "$code_sign_identity" \
+    --entitlements "$entitlements_path" \
+    "$app_path"
 fi
 
 echo "$app_path"

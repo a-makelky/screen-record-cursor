@@ -1,13 +1,14 @@
 # Release Testing
 
-CI proves that the app compiles, packages, and passes deterministic tests. It
-cannot prove that macOS, a recorder, and WindowServer compose the cursor
-correctly. Complete this matrix on real Macs before labeling a build stable.
+CI proves that the app compiles, packages, uses App Sandbox, contains no private
+cursor symbols, and passes deterministic tests. It cannot prove that macOS and a
+recorder compose the static overlay correctly. Complete this matrix on real Macs
+before labeling a build stable.
 
 ## Safety lifecycle
 
-Start each case with Recording mode enabled. The custom cursor must disappear
-and the native cursor must be immediately usable after:
+Start each case with Recording mode enabled. The custom overlay must disappear
+and the native cursor must remain usable after:
 
 - [ ] Turning Recording mode off
 - [ ] Quitting from the menu-bar panel
@@ -18,19 +19,20 @@ and the native cursor must be immediately usable after:
 - [ ] Connecting or disconnecting an external display
 - [ ] Changing display resolution or scaling
 
-After every case, relaunch the app and confirm Recording mode can start again
-without two cursors or an invisible cursor.
+After every case, relaunch the app and confirm Recording mode can start again.
 
 ## Recorder compatibility
 
 Record at least 60 seconds in each supported recorder:
 
-| Recorder | Full display | Region | Click sound | One cursor |
+| Recorder | Full display | Region | Click sound | Native arrow covered |
 |---|---|---|---|---|
 | Descript | [ ] | [ ] | [ ] | [ ] |
 | QuickTime Player | [ ] | [ ] | [ ] | [ ] |
 | OBS | [ ] | [ ] | [ ] | [ ] |
 | Loom | [ ] | [ ] | [ ] | [ ] |
+| Zoom | [ ] | [ ] | [ ] | [ ] |
+| Teams | [ ] | [ ] | [ ] | [ ] |
 
 If a recorder independently adds the native pointer, disable its cursor option
 and record again. App-window-only capture is not a supported mode because the
@@ -49,6 +51,10 @@ cursor is rendered in a separate transparent window.
 - [ ] Menu bar and Dock
 - [ ] Light and dark desktop backgrounds
 - [ ] Dragging, scrolling, gestures, and right-click remain unaffected
+- [ ] Ordinary arrow is fully covered at every size preset
+- [ ] I-beam, pointing hand, and resize cursors have documented behavior
+- [ ] Enlarged macOS Accessibility cursors have documented behavior
+- [ ] The custom arrow never rotates
 
 ## First-run and daily controls
 
@@ -56,13 +62,12 @@ cursor is rendered in a separate transparent window.
 - [ ] Try the cursor enables one enlarged cursor
 - [ ] First-run title, explanation, and primary button meet contrast requirements
 - [ ] Menu-bar popover fits completely on the built-in MacBook display
-- [ ] Popover shows five interactive quick-control rows and does not scroll
+- [ ] Popover shows four interactive quick-control rows and does not scroll
 - [ ] Cursor color presets and the custom color picker work from the popover
 - [ ] Cursor size presets work from the popover and a fresh install selects 1.5×
 - [ ] An unchanged legacy 1.65× default migrates once to the 1.5× preset
 - [ ] Click ring changes between On Click, Always, and Off from the popover
 - [ ] Click feedback selects a visual effect and mutes sound from the popover
-- [ ] Kinetic cursor turns on and off from the popover
 - [ ] One Settings entry opens the advanced Settings window
 - [ ] Settings opens as a separate, resizable 824 × 520 point window
 - [ ] Cursor, Clicks, and General sections fit without scrolling
@@ -72,10 +77,7 @@ cursor is rendered in a separate transparent window.
 - [ ] Active menu-bar item keeps a bright-blue badge in light and dark menu bars
 - [ ] Off and active menu-bar states remain distinguishable in grayscale
 - [ ] Click effects include a distinct system icon and text label
-- [ ] Kinetic motion defaults to Smooth; Smooth, Balanced, and Quick all persist
-- [ ] Enabling macOS Reduce Motion immediately pauses kinetic movement
-- [ ] Disabling macOS Reduce Motion resumes the saved kinetic preference
-- [ ] A failed native-cursor hide leaves Recording mode off
+- [ ] A failed global mouse monitor shows a warning while the cursor stays active
 - [ ] Launch at Login works after the app is moved to Applications
 - [ ] Launch at Login survives a reboot
 - [ ] Reset Settings restores the documented defaults
@@ -96,6 +98,20 @@ cursor is rendered in a separate transparent window.
 - [ ] Escape cancels capture and Delete clears the shortcut
 - [ ] A recorded shortcut persists after relaunch
 - [ ] A conflicting shortcut is rejected without losing the previous shortcut
+
+## Store packaging and sandbox
+
+- [ ] App Sandbox entitlement is present in the final signed archive
+- [ ] `get-task-allow` is absent or false
+- [ ] `PrivacyInfo.xcprivacy` is present in the final app
+- [ ] No private WindowServer, cursor-hiding, or kinetic symbols appear in the
+      final executable
+- [ ] Global mouse-down monitoring works from a clean TestFlight install
+- [ ] Launch at Login works after reboot from a clean TestFlight install
+- [ ] Global shortcut works from a clean TestFlight install
+- [ ] The app makes no network connection
+- [ ] Legacy Launch at Login is disabled and the legacy edition is not running
+      during Store-edition tests
 
 ## Accessibility
 

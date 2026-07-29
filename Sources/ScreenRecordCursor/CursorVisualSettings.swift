@@ -78,18 +78,6 @@ struct CursorVisualSettings {
     var ringThickness: CGFloat
     var cursorScale: CGFloat
     var clickEffect: ClickEffect
-    var kineticEnabled: Bool
-    var kineticResponse: KineticResponse
-}
-
-extension KineticResponse {
-    var label: String {
-        switch self {
-        case .smooth: "Smooth"
-        case .balanced: "Balanced"
-        case .quick: "Quick"
-        }
-    }
 }
 
 extension String {

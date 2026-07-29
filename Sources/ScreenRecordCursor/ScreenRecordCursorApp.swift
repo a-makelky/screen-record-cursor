@@ -75,12 +75,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             name: NSWorkspace.sessionDidResignActiveNotification,
             object: nil
         )
-        workspaceCenter.addObserver(
-            self,
-            selector: #selector(refreshAccessibilityDisplayOptions(_:)),
-            name: NSWorkspace.accessibilityDisplayOptionsDidChangeNotification,
-            object: nil
-        )
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(stopForDisplayChange(_:)),
@@ -97,10 +91,5 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     @objc
     private func stopForDisplayChange(_ notification: Notification) {
         AppState.shared.stopForDisplayChange()
-    }
-
-    @objc
-    private func refreshAccessibilityDisplayOptions(_ notification: Notification) {
-        AppState.shared.refreshAccessibilityDisplayOptions()
     }
 }

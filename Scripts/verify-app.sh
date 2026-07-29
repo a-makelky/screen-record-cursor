@@ -5,10 +5,12 @@ project_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 app_path="${1:-"$project_root/.build/app/Screen Recording Cursor.app"}"
 plist="$app_path/Contents/Info.plist"
 binary="$app_path/Contents/MacOS/ScreenRecordCursor"
+privacy_manifest="$app_path/Contents/Resources/PrivacyInfo.xcprivacy"
 
 test -d "$app_path"
 test -f "$plist"
 test -x "$binary"
+test -f "$privacy_manifest"
 
 for sound in mouse-click mouse-pop plop-click spacebar typewriter; do
   test -f "$app_path/Contents/Resources/Sounds/$sound.wav"
@@ -21,7 +23,7 @@ plist_value() {
 
 test "$(plist_value CFBundleExecutable)" = "ScreenRecordCursor"
 test "$(plist_value CFBundlePackageType)" = "APPL"
-test "$(plist_value CFBundleIdentifier)" = "com.aaronmakelky.screen-record-cursor"
+test "$(plist_value CFBundleIdentifier)" = "com.aaronmakelky.screen-recording-cursor"
 test "$(plist_value LSMinimumSystemVersion)" = "13.0"
 test "$(plist_value LSUIElement)" = "true"
 
@@ -34,7 +36,7 @@ if [[ -n "${EXPECTED_APP_BUILD:-}" ]]; then
 fi
 
 if command -v codesign >/dev/null 2>&1; then
-  codesign --verify --deep --strict "$app_path"
+  "$project_root/Scripts/validate-store-app.sh" "$app_path"
 fi
 
 echo "Verified: $app_path"

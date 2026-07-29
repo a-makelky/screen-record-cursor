@@ -10,7 +10,8 @@ final class GlobalClickMonitor {
         self.onClick = onClick
     }
 
-    func start() {
+    @discardableResult
+    func start() -> Bool {
         stop()
 
         let events: NSEvent.EventTypeMask = [
@@ -32,6 +33,7 @@ final class GlobalClickMonitor {
             return event
         }
 
+        return globalMonitor != nil
     }
 
     func stop() {

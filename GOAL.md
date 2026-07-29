@@ -20,13 +20,10 @@ purchase in the Mac App Store**.
 - [x] Blink click effect
 - [x] Optional bundled click sounds and volume control
 - [x] Five selectable local click sounds
-- [x] Optional kinetic cursor driven by a deterministic motion model
-- [x] Five interactive quick controls in a compact, non-scrolling popover
+- [x] Four interactive quick controls in a compact, non-scrolling popover
 - [x] One advanced Settings entry for precise customization
-- [x] Smooth kinetic motion is the default, with Balanced and Quick presets
 - [x] Persistent bright-blue menu-bar indicator while Recording mode is active
-- [x] Code-level accessibility labels, values, target sizes, and Reduced Motion
-      behavior
+- [x] Code-level accessibility labels, values, and target sizes
 - [x] No AI, account, analytics, network connection, or third-party dependency
 - [x] Local settings persistence
 - [x] Customizable two-key global Recording mode shortcut
@@ -35,8 +32,9 @@ purchase in the Mac App Store**.
 - [x] Universal app release automation
 - [x] Native build passes in GitHub Actions
 - [x] Descript full-display and region recording verified on a real Mac
-- [x] Native cursor restoration verified during normal use
-- [ ] Native cursor restoration verified across the full safety lifecycle
+- [x] Private WindowServer cursor hiding removed from the Store branch
+- [x] App Sandbox entitlement and privacy manifest added
+- [x] Source and packaged-binary private-API gates added
 - [ ] First-run onboarding verified on a clean install
 - [ ] Launch at Login verified after reboot
 - [ ] Click sound verified with Descript computer audio capture
@@ -45,8 +43,8 @@ purchase in the Mac App Store**.
 - [ ] QuickTime and OBS compatibility verified
 - [ ] Native Accessibility Inspector, VoiceOver, Voice Control, keyboard, and
       contrast matrix passes
-- [ ] Public-API cursor engine replaces private WindowServer behavior
-- [ ] App Sandbox target passes on-device recording tests
+- [ ] Static overlay covers the ordinary arrow across supported recorders
+- [ ] App Sandbox build passes on-device recording tests
 - [ ] Mac App Store archive, privacy manifest, listing, and TestFlight build pass
 
 ## Quality target

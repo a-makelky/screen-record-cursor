@@ -7,7 +7,8 @@ cd "$project_root"
 required=(
   "Package.swift"
   "Resources/Info.plist"
-  "Sources/CursorCore/KineticCursorModel.swift"
+  "Resources/PrivacyInfo.xcprivacy"
+  "Resources/ScreenRecordCursor.entitlements"
   "Sources/CursorCore/RingVisibilityMode.swift"
   "Sources/ScreenRecordCursor/ScreenRecordCursorApp.swift"
   "Sources/ScreenRecordCursor/BrandPalette.swift"
@@ -18,10 +19,10 @@ required=(
   "Sources/ScreenRecordCursor/GlobalHotKeyController.swift"
   "Sources/ScreenRecordCursor/ShortcutRecorderView.swift"
   "Sources/ScreenRecordCursor/LaunchAtLoginController.swift"
-  "Sources/ScreenRecordCursor/NativeCursorVisibilityController.swift"
   "Sources/ScreenRecordCursor/GlobalClickMonitor.swift"
-  "Tests/CursorCoreTests/KineticCursorModelTests.swift"
   "Tests/CursorCoreTests/RingVisibilityModeTests.swift"
+  "Scripts/validate-store-source.sh"
+  "Scripts/validate-store-app.sh"
   "LICENSE"
   "README.md"
   "TESTING.md"
@@ -53,8 +54,10 @@ with path.open("rb") as handle:
 
 expected = {
     "CFBundleExecutable": "ScreenRecordCursor",
+    "CFBundleIdentifier": "com.aaronmakelky.screen-recording-cursor",
     "CFBundlePackageType": "APPL",
     "LSUIElement": True,
+    "ITSAppUsesNonExemptEncryption": False,
 }
 
 for key, value in expected.items():
@@ -63,6 +66,36 @@ for key, value in expected.items():
 
 if plist.get("LSMinimumSystemVersion") != "13.0":
     raise SystemExit("LSMinimumSystemVersion must be 13.0")
+
+entitlements_path = Path("Resources/ScreenRecordCursor.entitlements")
+with entitlements_path.open("rb") as handle:
+    entitlements = plistlib.load(handle)
+
+if entitlements != {"com.apple.security.app-sandbox": True}:
+    raise SystemExit("Store entitlements must contain only App Sandbox")
+
+privacy_path = Path("Resources/PrivacyInfo.xcprivacy")
+with privacy_path.open("rb") as handle:
+    privacy = plistlib.load(handle)
+
+if privacy.get("NSPrivacyTracking") is not False:
+    raise SystemExit("Privacy manifest must declare tracking false")
+if privacy.get("NSPrivacyCollectedDataTypes") != []:
+    raise SystemExit("Privacy manifest must declare no collected data")
+if privacy.get("NSPrivacyTrackingDomains") != []:
+    raise SystemExit("Privacy manifest must declare no tracking domains")
+
+reasons = {
+    entry.get("NSPrivacyAccessedAPIType"):
+        entry.get("NSPrivacyAccessedAPITypeReasons")
+    for entry in privacy.get("NSPrivacyAccessedAPITypes", [])
+}
+expected_reasons = {
+    "NSPrivacyAccessedAPICategoryUserDefaults": ["CA92.1"],
+    "NSPrivacyAccessedAPICategorySystemBootTime": ["35F9.1"],
+}
+if reasons != expected_reasons:
+    raise SystemExit("Privacy manifest required-reason declarations are incorrect")
 PY
 
 for script in Scripts/*.sh; do
@@ -82,13 +115,6 @@ if grep -R -nE 'NSEvent\.addGlobalMonitorForEvents.*key|CGEvent\.tapCreate' \
   exit 1
 fi
 
-cursor_api_uses="$(grep -R -lE 'CGDisplay(Hide|Show)Cursor|SetsCursorInBackground|CGS[A-Z]|SLS[A-Z]' Sources || true)"
-if [[ "$cursor_api_uses" != "Sources/ScreenRecordCursor/NativeCursorVisibilityController.swift" ]]; then
-  echo "Cursor visibility APIs must remain isolated in NativeCursorVisibilityController.swift." >&2
-  printf '%s\n' "$cursor_api_uses" >&2
-  exit 1
-fi
-
 if grep -q '\.package(' Package.swift; then
   echo "External Swift package dependencies are not allowed." >&2
   exit 1
@@ -96,12 +122,6 @@ fi
 
 if grep -R -nE 'makeClickWAV|deterministicNoise' Sources/ScreenRecordCursor; then
   echo "Click sounds must come from the bundled WAV resources." >&2
-  exit 1
-fi
-
-if ! grep -q 'accessibilityDisplayShouldReduceMotion' \
-  Sources/ScreenRecordCursor/AppState.swift; then
-  echo "Kinetic cursor must honor the macOS Reduce Motion setting." >&2
   exit 1
 fi
 
@@ -116,5 +136,7 @@ if ! grep -q 'BrandPalette.brightBlue' \
   echo "The active menu-bar item must retain the bright-blue status indicator." >&2
   exit 1
 fi
+
+./Scripts/validate-store-source.sh
 
 echo "Static validation passed."

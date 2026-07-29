@@ -3,7 +3,7 @@
 Screen Recording Cursor targets the macOS accessibility expectations reflected
 in Apple's Human Interface Guidelines and App Store accessibility evaluation:
 VoiceOver, Voice Control, Dark Interface, Differentiate Without Color Alone,
-Sufficient Contrast, and Reduced Motion.
+and Sufficient Contrast.
 
 ## Implemented safeguards
 
@@ -16,8 +16,6 @@ Sufficient Contrast, and Reduced Motion.
   expose explicit names and values.
 - The custom global-shortcut recorder exposes a button role, value, help text,
   press action, and keyboard focus ring.
-- Kinetic cursor movement pauses when macOS Reduce Motion is enabled and resumes
-  if the setting is turned off.
 - The onboarding primary action is the default keyboard action.
 
 ## Required native Mac verification
@@ -33,7 +31,5 @@ technology experience. Before release, complete these checks on a real Mac:
 4. Use Voice Control to activate every visible control by its spoken name.
 5. Repeat the full flow in light mode, dark mode, Increase Contrast, Reduce
    Transparency, and grayscale.
-6. Enable Reduce Motion while Recording mode is active and confirm kinetic
-   movement stops immediately without changing the saved preference.
-7. Confirm the active menu-bar badge stays bright blue on light and dark desktop
+6. Confirm the active menu-bar badge stays bright blue on light and dark desktop
    backgrounds while the off state remains visually distinct.

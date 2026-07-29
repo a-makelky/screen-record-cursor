@@ -14,9 +14,7 @@ final class CursorOverlayView: NSView {
         ringDiameter: 44,
         ringThickness: 4,
         cursorScale: 1.5,
-        clickEffect: .ripple,
-        kineticEnabled: false,
-        kineticResponse: .smooth
+        clickEffect: .ripple
     ) {
         didSet {
             let shouldClearClickAnimation = (
@@ -29,10 +27,6 @@ final class CursorOverlayView: NSView {
             }
             needsDisplay = true
         }
-    }
-
-    var rotationRadians: Double = 0 {
-        didSet { needsDisplay = true }
     }
 
     private var ripples: [Ripple] = []
@@ -146,7 +140,6 @@ final class CursorOverlayView: NSView {
 
         context.saveGState()
         context.translateBy(x: hotspot.x, y: hotspot.y)
-        context.rotate(by: CGFloat(rotationRadians))
         context.scaleBy(x: settings.cursorScale, y: settings.cursorScale)
 
         let path = NSBezierPath()
@@ -159,9 +152,9 @@ final class CursorOverlayView: NSView {
         path.line(to: CGPoint(x: 21, y: -16.5))
         path.close()
 
-        // First paint a wider opaque silhouette. The overlay lives above the
-        // system cursor, and this antialiased coverage pass prevents native
-        // cursor pixels from leaking through around the arrowhead.
+        // Paint a wider opaque silhouette before the colored arrow. The Store
+        // edition leaves the native pointer active, so this fixed coverage pass
+        // masks the ordinary arrow without relying on private cursor APIs.
         let outlineColor = settings.cursorColor.contrastingStrokeColor
         outlineColor.setStroke()
         path.lineJoinStyle = .round

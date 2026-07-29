@@ -1,8 +1,11 @@
 import AppKit
-import CursorCore
 
 @MainActor
 final class CursorOverlayController {
+    struct StartResult {
+        let clickMonitoringAvailable: Bool
+    }
+
     private let overlaySize = CGSize(width: 256, height: 256)
     private let settingsProvider: @MainActor () -> CursorVisualSettings
     private let clickSoundProvider:
@@ -12,12 +15,7 @@ final class CursorOverlayController {
     private var overlayView: CursorOverlayView?
     private var frameTimer: DispatchSourceTimer?
     private var clickMonitor: GlobalClickMonitor?
-    private var kineticResponse = KineticResponse.smooth
-    private var kineticModel = KineticCursorModel(
-        configuration: KineticResponse.smooth.configuration
-    )
     private let soundPlayer = ClickSoundPlayer()
-    private let nativeCursorVisibility = NativeCursorVisibilityController()
     private var lastPosition: CGPoint?
 
     init(
@@ -29,14 +27,14 @@ final class CursorOverlayController {
         self.clickSoundProvider = clickSoundProvider
     }
 
-    @discardableResult
-    func start() -> Bool {
-        guard panel == nil else { return true }
+    func start() -> StartResult {
+        guard panel == nil else {
+            return StartResult(clickMonitoringAvailable: clickMonitor != nil)
+        }
 
         let settings = settingsProvider()
         let view = CursorOverlayView(frame: CGRect(origin: .zero, size: overlaySize))
         view.settings = settings
-        applyKineticResponse(settings.kineticResponse)
 
         let panel = CursorOverlayPanel(
             contentRect: CGRect(origin: .zero, size: overlaySize),
@@ -62,20 +60,14 @@ final class CursorOverlayController {
 
         self.panel = panel
         overlayView = view
-        kineticModel.reset()
         updateFrame()
         panel.orderFrontRegardless()
-
-        guard nativeCursorVisibility.hideForRecording() else {
-            stop()
-            return false
-        }
 
         let monitor = GlobalClickMonitor { [weak self] in
             self?.handleClick()
         }
         clickMonitor = monitor
-        monitor.start()
+        let clickMonitoringAvailable = monitor.start()
 
         let timer = DispatchSource.makeTimerSource(queue: .main)
         timer.schedule(
@@ -88,7 +80,9 @@ final class CursorOverlayController {
         }
         frameTimer = timer
         timer.resume()
-        return true
+        return StartResult(
+            clickMonitoringAvailable: clickMonitoringAvailable
+        )
     }
 
     func stop() {
@@ -103,14 +97,10 @@ final class CursorOverlayController {
         panel = nil
         overlayView = nil
         lastPosition = nil
-        kineticModel.reset()
-        nativeCursorVisibility.showAfterRecording()
     }
 
     func refreshSettings() {
-        let settings = settingsProvider()
-        applyKineticResponse(settings.kineticResponse)
-        overlayView?.settings = settings
+        overlayView?.settings = settingsProvider()
     }
 
     private func updateFrame() {
@@ -118,16 +108,6 @@ final class CursorOverlayController {
 
         let position = NSEvent.mouseLocation
         let timestamp = ProcessInfo.processInfo.systemUptime
-        let settings = settingsProvider()
-        let motion = kineticModel.update(
-            position: position,
-            timestamp: timestamp,
-            enabled: settings.kineticEnabled
-        )
-
-        if abs(overlayView.rotationRadians - motion.rotationRadians) > 0.0001 {
-            overlayView.rotationRadians = motion.rotationRadians
-        }
         overlayView.advance(to: timestamp)
 
         if lastPosition != position {
@@ -149,18 +129,11 @@ final class CursorOverlayController {
             soundPlayer.play(style: sound.style, volume: sound.volume)
         }
     }
-
-    private func applyKineticResponse(_ response: KineticResponse) {
-        guard response != kineticResponse else { return }
-
-        kineticResponse = response
-        kineticModel = KineticCursorModel(configuration: response.configuration)
-    }
 }
 
 final class CursorOverlayPanel: NSPanel {
-    /// Keep the replacement visible above ordinary app and system UI windows.
-    /// Recording mode separately hides the hardware-composited native cursor.
+    /// Keep the public-API overlay visible above ordinary app and system UI
+    /// windows. The native cursor remains active underneath.
     static let aboveSystemCursorLevel = NSWindow.Level(
         rawValue: Int(CGWindowLevelForKey(.cursorWindow)) + 1
     )

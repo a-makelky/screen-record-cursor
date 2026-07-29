@@ -39,16 +39,20 @@ final class ClickSoundPlayer {
             return bundledURL
         }
 
-        let sourceRoot = URL(fileURLWithPath: #filePath)
-            .deletingLastPathComponent()
-            .deletingLastPathComponent()
-            .deletingLastPathComponent()
-        let developmentURL = sourceRoot
-            .appendingPathComponent("Resources", isDirectory: true)
-            .appendingPathComponent("Sounds", isDirectory: true)
-            .appendingPathComponent("\(style.resourceName).wav")
-        return FileManager.default.fileExists(atPath: developmentURL.path)
-            ? developmentURL
-            : nil
+        #if DEBUG
+            let sourceRoot = URL(fileURLWithPath: #filePath)
+                .deletingLastPathComponent()
+                .deletingLastPathComponent()
+                .deletingLastPathComponent()
+            let developmentURL = sourceRoot
+                .appendingPathComponent("Resources", isDirectory: true)
+                .appendingPathComponent("Sounds", isDirectory: true)
+                .appendingPathComponent("\(style.resourceName).wav")
+            return FileManager.default.fileExists(atPath: developmentURL.path)
+                ? developmentURL
+                : nil
+        #else
+            return nil
+        #endif
     }
 }
