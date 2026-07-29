@@ -66,6 +66,7 @@ struct SettingsView: View {
                     )
             }
             .buttonStyle(.plain)
+            .keyboardShortcut(.defaultAction)
             .accessibilityHint("Turns on the enhanced cursor")
 
             Button("Set up later") {
@@ -141,6 +142,8 @@ struct SettingsView: View {
                                 )
                         }
                         .frame(width: 22, height: 22)
+                        .frame(width: 28, height: 28)
+                        .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
                     .help("Choose a custom cursor color")
@@ -156,7 +159,7 @@ struct SettingsView: View {
                         } label: {
                             Text(preset.label)
                                 .font(.caption.weight(.medium))
-                                .frame(width: 37, height: 24)
+                                .frame(width: 40, height: 28)
                                 .background(
                                     preset.matches(state.cursorScale)
                                         ? Color.accentColor
@@ -199,6 +202,7 @@ struct SettingsView: View {
                 .pickerStyle(.segmented)
                 .frame(width: 190)
                 .accessibilityLabel("Click ring visibility")
+                .accessibilityValue(state.ringVisibility.label)
             }
 
             quickControlRow(title: "Click feedback") {
@@ -221,7 +225,8 @@ struct SettingsView: View {
                                 .accessibilityHidden(true)
                         }
                         .font(.caption)
-                        .frame(minWidth: 78)
+                        .frame(minWidth: 78, minHeight: 28)
+                        .contentShape(Rectangle())
                     }
                     .disabled(!state.ringVisibility.allowsClickFeedback)
                     .accessibilityLabel("Click effect, \(currentClickEffect.label)")
@@ -235,7 +240,8 @@ struct SettingsView: View {
                                 : "speaker.slash.fill"
                         )
                         .font(.system(size: 13, weight: .medium))
-                        .frame(width: 26, height: 24)
+                        .frame(width: 28, height: 28)
+                        .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
                     .help(state.soundEnabled ? "Mute click sound" : "Turn on click sound")
@@ -253,6 +259,20 @@ struct SettingsView: View {
                     .labelsHidden()
                     .toggleStyle(.switch)
                     .accessibilityLabel("Kinetic cursor")
+                    .accessibilityValue(
+                        state.kineticEnabled
+                            ? (
+                                state.reduceMotionEnabled
+                                    ? "On, paused by Reduce Motion"
+                                    : "On"
+                            )
+                            : "Off"
+                    )
+                    .help(
+                        state.reduceMotionEnabled
+                            ? "Kinetic motion is paused while Reduce Motion is enabled"
+                            : "Turn kinetic cursor motion on or off"
+                    )
             }
         }
     }
@@ -318,6 +338,8 @@ struct SettingsView: View {
                 }
                 .padding(isSelected ? 1 : 0)
                 .frame(width: 22, height: 22)
+                .frame(width: 28, height: 28)
+                .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Use \(hex.accessibleColorName) cursor")
@@ -383,6 +405,7 @@ private struct CursorScalePreset: Identifiable {
 }
 
 struct PersistentRecordingSwitch: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Binding var isOn: Bool
 
     var body: some View {
@@ -400,7 +423,10 @@ struct PersistentRecordingSwitch: View {
                     .frame(width: 22, height: 22)
                     .padding(3)
             }
-            .animation(.easeInOut(duration: 0.14), value: isOn)
+            .animation(
+                reduceMotion ? nil : .easeInOut(duration: 0.14),
+                value: isOn
+            )
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Recording mode")
@@ -408,7 +434,7 @@ struct PersistentRecordingSwitch: View {
     }
 
     private var enabledColor: Color {
-        Color(red: 0.039, green: 0.518, blue: 1)
+        BrandPalette.brightBlue
     }
 
     private var disabledColor: Color {

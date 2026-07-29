@@ -12,14 +12,35 @@ struct ScreenRecordCursorApp: App {
             SettingsView()
                 .environmentObject(state)
         } label: {
-            Label(
-                state.isActive
-                    ? "Screen Recording Cursor, enhanced cursor on"
-                    : "Screen Recording Cursor, enhanced cursor off",
-                systemImage: state.isActive ? "cursorarrow.rays" : "cursorarrow"
-            )
+            MenuBarStatusLabel(isActive: state.isActive)
         }
         .menuBarExtraStyle(.window)
+    }
+}
+
+private struct MenuBarStatusLabel: View {
+    let isActive: Bool
+
+    var body: some View {
+        ZStack {
+            if isActive {
+                Circle()
+                    .fill(BrandPalette.brightBlue)
+                    .frame(width: 19, height: 19)
+                    .accessibilityHidden(true)
+            }
+
+            Image(systemName: isActive ? "cursorarrow.rays" : "cursorarrow")
+                .font(.system(size: isActive ? 10 : 13, weight: .semibold))
+                .foregroundStyle(isActive ? Color.white : Color.primary)
+                .accessibilityHidden(true)
+        }
+        .frame(width: 22, height: 22)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Screen Recording Cursor")
+        .accessibilityValue(
+            isActive ? "Enhanced cursor on" : "Enhanced cursor off"
+        )
     }
 }
 
@@ -54,6 +75,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             name: NSWorkspace.sessionDidResignActiveNotification,
             object: nil
         )
+        workspaceCenter.addObserver(
+            self,
+            selector: #selector(refreshAccessibilityDisplayOptions(_:)),
+            name: NSWorkspace.accessibilityDisplayOptionsDidChangeNotification,
+            object: nil
+        )
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(stopForDisplayChange(_:)),
@@ -70,5 +97,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     @objc
     private func stopForDisplayChange(_ notification: Notification) {
         AppState.shared.stopForDisplayChange()
+    }
+
+    @objc
+    private func refreshAccessibilityDisplayOptions(_ notification: Notification) {
+        AppState.shared.refreshAccessibilityDisplayOptions()
     }
 }

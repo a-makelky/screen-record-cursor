@@ -24,6 +24,9 @@ purchase in the Mac App Store**.
 - [x] Five interactive quick controls in a compact, non-scrolling popover
 - [x] One advanced Settings entry for precise customization
 - [x] Smooth kinetic motion is the default, with Balanced and Quick presets
+- [x] Persistent bright-blue menu-bar indicator while Recording mode is active
+- [x] Code-level accessibility labels, values, target sizes, and Reduced Motion
+      behavior
 - [x] No AI, account, analytics, network connection, or third-party dependency
 - [x] Local settings persistence
 - [x] Customizable two-key global Recording mode shortcut
@@ -40,6 +43,8 @@ purchase in the Mac App Store**.
 - [ ] Retina and mixed-scale multi-display alignment verified
 - [ ] Permission denial and recovery verified
 - [ ] QuickTime and OBS compatibility verified
+- [ ] Native Accessibility Inspector, VoiceOver, Voice Control, keyboard, and
+      contrast matrix passes
 - [ ] Public-API cursor engine replaces private WindowServer behavior
 - [ ] App Sandbox target passes on-device recording tests
 - [ ] Mac App Store archive, privacy manifest, listing, and TestFlight build pass

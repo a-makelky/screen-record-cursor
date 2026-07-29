@@ -48,10 +48,14 @@ Dependent controls disappear when their parent feature is off.
 - Pair every visual effect icon with a text label.
 - Never use color alone to communicate selection or active state.
 - Announce the enhanced cursor state in the menu-bar item's accessibility label.
+- Show a persistent bright-blue badge around the menu-bar cursor while Recording
+  mode is active. Keep the off-state symbol and spoken value distinct so color
+  is not the only status signal.
 - Use human color names for assistive technology, not hex values.
 - Keep the first-run screen to one benefit statement, one sentence, one primary
   action, and one defer action.
 - Preserve sufficient contrast in light mode, dark mode, and Increase Contrast.
+- Pause kinetic motion whenever macOS Reduce Motion is enabled.
 
 ## Decisions intentionally deferred
 
@@ -61,8 +65,9 @@ Dependent controls disappear when their parent feature is off.
   presentation apps.
 - Broader positioning as a general cursor customizer. The current differentiated
   job remains screen recording and screen sharing.
-- A final custom menu-bar icon. The current outlined cursor and active rays
-  establish state; the distinctive production artwork still needs a real asset.
+- Final production artwork for the menu-bar and application icons. The current
+  cursor symbol and bright-blue active badge establish state while that asset is
+  developed.
 
 ## Store boundary
 

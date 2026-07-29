@@ -28,19 +28,55 @@ struct ShortcutRecorderView: NSViewRepresentable {
 
 final class ShortcutRecorderControl: NSView {
     var shortcut = HotKeyShortcut.defaultShortcut {
-        didSet { needsDisplay = true }
+        didSet {
+            needsDisplay = true
+            NSAccessibility.post(element: self, notification: .valueChanged)
+        }
     }
     var onCapture: ((HotKeyShortcut) -> Void)?
     var onClear: (() -> Void)?
     var onMessage: ((String?) -> Void)?
 
     private var isRecording = false {
-        didSet { needsDisplay = true }
+        didSet {
+            needsDisplay = true
+            NSAccessibility.post(element: self, notification: .valueChanged)
+        }
     }
 
     override var acceptsFirstResponder: Bool { true }
     override var intrinsicContentSize: NSSize {
         NSSize(width: 260, height: 38)
+    }
+
+    override func isAccessibilityElement() -> Bool { true }
+
+    override func accessibilityRole() -> NSAccessibility.Role? { .button }
+
+    override func accessibilityLabel() -> String? { "Global shortcut" }
+
+    override func accessibilityValue() -> Any? {
+        isRecording ? "Waiting for shortcut" : shortcut.displayLabel
+    }
+
+    override func accessibilityHelp() -> String? {
+        "Press to record a shortcut. Escape cancels and Delete clears it."
+    }
+
+    override func accessibilityPerformPress() -> Bool {
+        guard let window else { return false }
+        window.makeFirstResponder(self)
+        return true
+    }
+
+    override var focusRingMaskBounds: NSRect { bounds.insetBy(dx: 1, dy: 1) }
+
+    override func drawFocusRingMask() {
+        NSBezierPath(
+            roundedRect: focusRingMaskBounds,
+            xRadius: 8,
+            yRadius: 8
+        ).fill()
     }
 
     override func mouseDown(with event: NSEvent) {
@@ -50,6 +86,7 @@ final class ShortcutRecorderControl: NSView {
     override func becomeFirstResponder() -> Bool {
         let accepted = super.becomeFirstResponder()
         if accepted {
+            focusRingType = .default
             isRecording = true
             onMessage?(nil)
         }
@@ -88,6 +125,7 @@ final class ShortcutRecorderControl: NSView {
 
     override func resignFirstResponder() -> Bool {
         isRecording = false
+        focusRingType = .none
         return super.resignFirstResponder()
     }
 

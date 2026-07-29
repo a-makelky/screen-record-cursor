@@ -22,9 +22,32 @@ menu-bar utility can hide the native cursor. This behavior is isolated in
 `NativeCursorVisibilityController`, but it is not eligible for Mac App Store
 submission.
 
+WindowServer is a macOS process on the user's own Mac, not a Microsoft Windows
+server and not a remote service. The problem is not locality. The problem is
+that the development build calls implementation details Apple does not publish
+for third-party apps and may change without notice.
+
 Never submit the current development binary to App Review. The Store build must
 use public APIs, run in App Sandbox, and preserve the product's central promise
 of one clear, enlarged cursor. A weaker ring-only Store edition is not the goal.
+
+## Recommended engine split
+
+Keep one shared interface and cursor-rendering model, then separate the behavior
+behind it:
+
+- **Development preview engine:** the current system-wide overlay and private
+  background cursor control, used only for testing the product experience.
+- **Mac App Store engine:** a local ScreenCaptureKit recorder that excludes the
+  system cursor from captured frames, composites the custom cursor and click
+  feedback into those frames, and writes the finished recording to a
+  user-selected file.
+
+The Store engine preserves local processing, privacy, the kinetic cursor, click
+feedback, and the $9.99 one-time purchase. Its unavoidable product difference is
+that the enhanced cursor appears in recordings made through Screen Recording
+Cursor; public macOS APIs do not currently provide a supported way for a
+background App Store utility to replace the pointer globally in every app.
 
 ## Milestones
 
@@ -48,7 +71,8 @@ of one clear, enlarged cursor. A weaker ring-only Store edition is not the goal.
 - [x] Precise controls behind one Settings entry
 - [x] Visual labels for Ripple, Blink, Both, and Off
 - [x] Kinetic cursor at the top level with motion presets in Settings
-- [ ] Final distinctive menu-bar and app icon
+- [x] Persistent bright-blue active menu-bar status indicator
+- [ ] Final distinctive menu-bar and app artwork
 - [ ] Validate the default cursor, ring, sound, and motion with beta users
 
 Defer spotlight, trails, keystroke display, annotations, magnifier, uploaded
@@ -76,7 +100,7 @@ engine.
 - [ ] `PrivacyInfo.xcprivacy` with required-reason API declarations
 - [ ] Final app icon, screenshots, description, keywords, and support URL
 - [ ] Privacy, support, refund, and troubleshooting pages
-- [ ] Non-consumable $9.99 purchase configuration
+- [ ] Configure the app itself as a $9.99 paid download in App Store Connect
 - [ ] TestFlight build installs and records on a clean Mac
 
 ### 5. TestFlight beta
@@ -86,6 +110,8 @@ engine.
 - [ ] Resolve every cursor-restoration or recording failure
 - [ ] Verify Retina, non-Retina, and mixed-scale displays
 - [ ] Confirm first-use understanding, menu hierarchy, and default settings
+- [ ] Complete `docs/ACCESSIBILITY.md` on a real Mac with Accessibility
+      Inspector, VoiceOver, Voice Control, and Full Keyboard Access
 - [ ] Collect permission to use five specific customer quotes
 
 ### 6. Paid Mac App Store launch

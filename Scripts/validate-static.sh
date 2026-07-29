@@ -10,6 +10,7 @@ required=(
   "Sources/CursorCore/KineticCursorModel.swift"
   "Sources/CursorCore/RingVisibilityMode.swift"
   "Sources/ScreenRecordCursor/ScreenRecordCursorApp.swift"
+  "Sources/ScreenRecordCursor/BrandPalette.swift"
   "Sources/ScreenRecordCursor/SettingsView.swift"
   "Sources/ScreenRecordCursor/SettingsWindowController.swift"
   "Sources/ScreenRecordCursor/SettingsWindowView.swift"
@@ -25,6 +26,7 @@ required=(
   "README.md"
   "TESTING.md"
   "docs/PUBLIC_RELEASE.md"
+  "docs/ACCESSIBILITY.md"
   "docs/EDUCATOR_ACCESS.md"
   "docs/SOUND_ASSETS.md"
   "Resources/Sounds/mouse-click.wav"
@@ -94,6 +96,24 @@ fi
 
 if grep -R -nE 'makeClickWAV|deterministicNoise' Sources/ScreenRecordCursor; then
   echo "Click sounds must come from the bundled WAV resources." >&2
+  exit 1
+fi
+
+if ! grep -q 'accessibilityDisplayShouldReduceMotion' \
+  Sources/ScreenRecordCursor/AppState.swift; then
+  echo "Kinetic cursor must honor the macOS Reduce Motion setting." >&2
+  exit 1
+fi
+
+if ! grep -q 'accessibilityPerformPress' \
+  Sources/ScreenRecordCursor/ShortcutRecorderView.swift; then
+  echo "The custom shortcut control must expose an accessibility action." >&2
+  exit 1
+fi
+
+if ! grep -q 'BrandPalette.brightBlue' \
+  Sources/ScreenRecordCursor/ScreenRecordCursorApp.swift; then
+  echo "The active menu-bar item must retain the bright-blue status indicator." >&2
   exit 1
 fi
 

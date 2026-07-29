@@ -48,6 +48,8 @@ final class AppState: ObservableObject {
     @Published private(set) var hotKeyEnabled: Bool
     @Published private(set) var hotKeyShortcut: HotKeyShortcut
     @Published private(set) var hotKeyMessage: String?
+    @Published private(set) var reduceMotionEnabled =
+        NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
 
     @Published var colorHex: String {
         didSet {
@@ -279,7 +281,7 @@ final class AppState: ObservableObject {
             ringThickness: ringThickness,
             cursorScale: cursorScale,
             clickEffect: clickEffect,
-            kineticEnabled: kineticEnabled,
+            kineticEnabled: kineticEnabled && !reduceMotionEnabled,
             kineticResponse: kineticResponse
         )
     }
@@ -318,6 +320,15 @@ final class AppState: ObservableObject {
 
     func dismissStatusMessage() {
         statusMessage = nil
+    }
+
+    func refreshAccessibilityDisplayOptions() {
+        let shouldReduceMotion =
+            NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+        guard shouldReduceMotion != reduceMotionEnabled else { return }
+
+        reduceMotionEnabled = shouldReduceMotion
+        overlayController.refreshSettings()
     }
 
     func setLaunchAtLogin(_ enabled: Bool) {

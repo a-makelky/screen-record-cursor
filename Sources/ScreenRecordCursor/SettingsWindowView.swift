@@ -54,6 +54,10 @@ struct SettingsWindowView: View {
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel("\(section.label) settings")
+                .accessibilityValue(
+                    navigation.selection == section ? "Selected" : "Not selected"
+                )
             }
 
             Spacer()
@@ -109,6 +113,16 @@ struct SettingsWindowView: View {
                         .pickerStyle(.segmented)
                         .frame(width: 260)
                         .accessibilityLabel("Kinetic cursor motion")
+                        .accessibilityValue(state.kineticResponse.label)
+                    }
+
+                    if state.reduceMotionEnabled {
+                        Text(
+                            "Kinetic motion is paused because Reduce Motion is enabled in macOS."
+                        )
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
                 }
             }
@@ -128,6 +142,7 @@ struct SettingsWindowView: View {
                     .pickerStyle(.segmented)
                     .frame(width: 260)
                     .accessibilityLabel("Ring visibility")
+                    .accessibilityValue(state.ringVisibility.label)
                 }
 
                 if state.ringVisibility != .off {
@@ -192,6 +207,8 @@ struct SettingsWindowView: View {
                     Toggle("", isOn: $state.soundEnabled)
                         .labelsHidden()
                         .toggleStyle(.switch)
+                        .accessibilityLabel("Click sound")
+                        .accessibilityValue(state.soundEnabled ? "On" : "Off")
                 }
 
                 if state.soundEnabled {
@@ -209,6 +226,8 @@ struct SettingsWindowView: View {
                         }
                         .labelsHidden()
                         .frame(width: 190)
+                        .accessibilityLabel("Click sound style")
+                        .accessibilityValue(state.soundStyle.label)
                     }
 
                     sliderRow(
@@ -262,6 +281,8 @@ struct SettingsWindowView: View {
                     )
                     .labelsHidden()
                     .toggleStyle(.switch)
+                    .accessibilityLabel("Global shortcut")
+                    .accessibilityValue(state.hotKeyEnabled ? "On" : "Off")
                 }
 
                 if state.hotKeyEnabled {
@@ -377,6 +398,8 @@ struct SettingsWindowView: View {
                                     )
                             }
                             .frame(width: 20, height: 20)
+                            .frame(width: 28, height: 28)
+                            .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel("Use \(hex.accessibleColorName)")
@@ -414,6 +437,8 @@ struct SettingsWindowView: View {
                             )
                     }
                     .frame(width: 20, height: 20)
+                    .frame(width: 28, height: 28)
+                    .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
                 .help(customTitle)
@@ -474,6 +499,8 @@ struct SettingsWindowView: View {
                 .frame(width: 58, alignment: .leading)
 
             Slider(value: value, in: range)
+                .accessibilityLabel(title)
+                .accessibilityValue(valueLabel)
 
             Text(valueLabel)
                 .font(.callout.monospacedDigit())

@@ -69,8 +69,12 @@ cursor is rendered in a separate transparent window.
 - [ ] Setting Click ring to Off or turning off Click sound hides dependent controls
 - [ ] Settings spacing remains clear in both light and dark mode
 - [ ] Menu-bar status announces whether the enhanced cursor is on or off
+- [ ] Active menu-bar item keeps a bright-blue badge in light and dark menu bars
+- [ ] Off and active menu-bar states remain distinguishable in grayscale
 - [ ] Click effects include a distinct system icon and text label
 - [ ] Kinetic motion defaults to Smooth; Smooth, Balanced, and Quick all persist
+- [ ] Enabling macOS Reduce Motion immediately pauses kinetic movement
+- [ ] Disabling macOS Reduce Motion resumes the saved kinetic preference
 - [ ] A failed native-cursor hide leaves Recording mode off
 - [ ] Launch at Login works after the app is moved to Applications
 - [ ] Launch at Login survives a reboot
@@ -92,6 +96,20 @@ cursor is rendered in a separate transparent window.
 - [ ] Escape cancels capture and Delete clears the shortcut
 - [ ] A recorded shortcut persists after relaunch
 - [ ] A conflicting shortcut is rejected without losing the previous shortcut
+
+## Accessibility
+
+Complete the native Mac matrix in `docs/ACCESSIBILITY.md`. In particular:
+
+- [ ] Accessibility Inspector reports no actionable issue in onboarding, the
+      popover, Cursor settings, Clicks settings, or General settings
+- [ ] VoiceOver reads every control's name, current value, and selected state
+- [ ] VoiceOver can activate the custom global-shortcut recorder
+- [ ] Full Keyboard Access reaches every interactive control in logical order
+- [ ] Every focused custom control has a visible focus indicator
+- [ ] Voice Control can activate every visible control by its spoken name
+- [ ] Light mode, dark mode, Increase Contrast, Reduce Transparency, and
+      grayscale preserve readable content and state
 
 Record the macOS version, Mac model, display arrangement, recorder version, and
 result in the release pull request.
