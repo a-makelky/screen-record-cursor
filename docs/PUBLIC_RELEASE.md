@@ -12,7 +12,9 @@ Target price: **$9.99 one-time purchase**.
 
 ## Distribution decision
 
-The first paid release will be a signed and notarized direct download.
+The official paid release is a **$9.99 one-time purchase in the Mac App Store**.
+Direct downloads are limited to development previews until the Store build is
+ready.
 
 The current single-cursor implementation uses the undocumented
 `SetsCursorInBackground` WindowServer connection property so a background
@@ -20,8 +22,9 @@ menu-bar utility can hide the native cursor. This behavior is isolated in
 `NativeCursorVisibilityController`, but it is not eligible for Mac App Store
 submission.
 
-Do not submit the direct target to App Review. Do not remove the product's core
-advantage merely to produce a weaker ring-only App Store edition.
+Never submit the current development binary to App Review. The Store build must
+use public APIs, run in App Sandbox, and preserve the product's central promise
+of one clear, enlarged cursor. A weaker ring-only Store edition is not the goal.
 
 ## Milestones
 
@@ -36,77 +39,71 @@ advantage merely to produce a weaker ring-only App Store edition.
 - [x] User-configurable two-key global Recording mode shortcut
 - [ ] Complete the real-Mac safety matrix in `TESTING.md`
 
-### 2. Minimum paid feature set
+### 2. Focused product experience
 
-- [ ] Visibility modes: Always, While Moving, and Clicks Only
-- [ ] Adjustable movement idle delay
-- [ ] Adjustable ring opacity and click-effect intensity
+- [x] Click ring visibility: On Click, Always, and Off
 - [x] Independent ring and cursor colors
-- [x] Ring-off mode
 - [x] Five selectable local click sounds
-- [ ] Separate left-click and right-click colors
-- [ ] Presets: Tutorial, Presentation, and Minimal
+- [x] Interactive daily controls in the menu-bar popover
+- [x] Precise controls behind one Settings entry
+- [x] Visual labels for Ripple, Blink, Both, and Off
+- [x] Kinetic cursor at the top level with motion presets in Settings
+- [ ] Final distinctive menu-bar and app icon
+- [ ] Validate the default cursor, ring, sound, and motion with beta users
 
 Defer spotlight, trails, keystroke display, annotations, magnifier, uploaded
 sounds, accounts, cloud sync, subscriptions, AI, and effects marketplaces.
 
-### 3. Paid-download quality
+### 3. Public-API App Store engine
 
-- [ ] Final app icon and product screenshots
-- [ ] Developer ID Application signing
-- [ ] Hardened Runtime with narrowly scoped entitlements
-- [ ] Apple notarization and stapled ticket
-- [ ] Drag-to-Applications DMG
-- [ ] Gatekeeper verification on a clean Mac
+- [ ] Build a sandboxed ScreenCaptureKit prototype
+- [ ] Capture without the system cursor
+- [ ] Composite the custom cursor at the exact recorded hotspot
+- [ ] Preserve click feedback, click sound, and kinetic motion
+- [ ] Verify video quality, performance, audio sync, and multi-display behavior
+- [ ] Scan the Store binary for private CGS/SLS symbols
+- [ ] Decide the final recording workflow only after the prototype is tested
+
+This is a product boundary as well as an engineering task. A ScreenCaptureKit
+edition records or exports content rather than changing the system cursor
+globally. Validate that workflow with creators before replacing the development
+engine.
+
+### 4. Mac App Store packaging
+
+- [ ] Separate Store target with App Sandbox
+- [ ] Mac App Store distribution signing and archive validation
+- [ ] `PrivacyInfo.xcprivacy` with required-reason API declarations
+- [ ] Final app icon, screenshots, description, keywords, and support URL
 - [ ] Privacy, support, refund, and troubleshooting pages
-- [ ] $9.99 checkout and durable download delivery
+- [ ] Non-consumable $9.99 purchase configuration
+- [ ] TestFlight build installs and records on a clean Mac
 
-The release workflow must assert the signing identity, run
-`spctl --assess --type execute`, submit with `notarytool`, staple the accepted
-ticket, and verify the final DMG. Ad-hoc signing is for alpha builds only.
-
-### 4. Small public beta
+### 5. TestFlight beta
 
 - [ ] Recruit 10–20 screen-recording creators and educators
-- [ ] Collect recorder, macOS, Mac model, and display details
-- [ ] Resolve every cursor-restoration failure
-- [ ] Resolve repeatable compatibility failures in Descript, QuickTime, and OBS
-- [ ] Publish a notarized release candidate
+- [ ] Collect macOS version, Mac model, display details, and recording workflow
+- [ ] Resolve every cursor-restoration or recording failure
+- [ ] Verify Retina, non-Retina, and mixed-scale displays
+- [ ] Confirm first-use understanding, menu hierarchy, and default settings
 - [ ] Collect permission to use five specific customer quotes
 
-### 5. Paid direct launch
+### 6. Paid Mac App Store launch
 
-- [ ] Publish the before/after demo and a 60-second setup video
-- [ ] Release the notarized DMG at $9.99
-- [ ] Provide Educator Access through the same checkout and binary
-- [ ] Document the supported recorder/capture modes
+- [ ] Publish a before/after demo and a 60-second setup video
+- [ ] Submit the $9.99 build to App Review
+- [ ] Document supported recording and export modes
+- [ ] Provide Educator Access without creating a second binary
 - [ ] Create a support-response and refund routine
-
-## Mac App Store feasibility gate
-
-Time-box a separate technical spike after the direct release is stable:
-
-1. Build a sandboxed prototype recorder using public ScreenCaptureKit APIs.
-2. Capture without the system cursor.
-3. Composite the custom cursor into the recorded output at the exact hotspot.
-4. Confirm acceptable quality, performance, audio sync, and multi-display behavior.
-5. Scan the prototype binary for `CGS`, `SLS`, `SetsCursorInBackground`, and
-   `CGCursorIsVisible`.
-
-If the prototype delivers one cursor reliably, create a separate App Store
-target with App Sandbox, App Store signing, Store-delivered updates, and no
-private cursor-control code.
-
-If it does not, continue selling the direct edition. A $9.99 ring-only utility
-does not have a strong reason to exist beside broad free alternatives.
 
 ## Definition of paid-ready
 
 A release is ready to charge for only when:
 
-- A clean Mac downloads, installs, and opens it without a Gatekeeper workaround.
-- Recording mode never leaves the user without a native cursor.
-- Descript, QuickTime, and OBS pass the real-device matrix.
-- Apple Silicon and Intel universal builds pass automated verification.
-- A buyer can pay, install, understand, and test the app in under five minutes.
+- The shipped binary uses public APIs and contains no private WindowServer calls.
+- App Sandbox, archive validation, TestFlight installation, and App Review pass.
+- Recording never leaves the user without a normal system cursor.
+- Apple Silicon and Intel pass automated and real-device verification.
+- A buyer can pay, install, understand, and make a first recording in under five
+  minutes.
 - Privacy, support, compatibility, and refund expectations are easy to find.

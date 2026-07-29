@@ -13,9 +13,10 @@ final class CursorOverlayView: NSView {
         ringVisibility: .onClick,
         ringDiameter: 44,
         ringThickness: 4,
-        cursorScale: 1.65,
+        cursorScale: 1.5,
         clickEffect: .ripple,
-        kineticEnabled: false
+        kineticEnabled: false,
+        kineticResponse: .smooth
     ) {
         didSet {
             let shouldClearClickAnimation = (

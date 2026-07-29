@@ -2,13 +2,14 @@
 
 Build and maintain a working, open-source macOS menu-bar app that makes a cursor
 clear, expressive, and recordable without AI, cloud services, subscriptions, or
-paid runtime dependencies.
+paid runtime dependencies. The official product target is a **$9.99 one-time
+purchase in the Mac App Store**.
 
 ## Version 1 acceptance criteria
 
 - [x] Menu-bar-only native macOS app
 - [x] Explicit Recording mode toggle
-- [x] Persistent colored ring at the true pointer hotspot
+- [x] Click-only ring by default, with Always and Off choices
 - [x] Enlarged opaque vector cursor
 - [x] Ten preset colors
 - [x] Native custom color picker
@@ -20,6 +21,9 @@ paid runtime dependencies.
 - [x] Optional bundled click sounds and volume control
 - [x] Five selectable local click sounds
 - [x] Optional kinetic cursor driven by a deterministic motion model
+- [x] Five interactive quick controls in a compact, non-scrolling popover
+- [x] One advanced Settings entry for precise customization
+- [x] Smooth kinetic motion is the default, with Balanced and Quick presets
 - [x] No AI, account, analytics, network connection, or third-party dependency
 - [x] Local settings persistence
 - [x] Customizable two-key global Recording mode shortcut
@@ -36,6 +40,9 @@ paid runtime dependencies.
 - [ ] Retina and mixed-scale multi-display alignment verified
 - [ ] Permission denial and recovery verified
 - [ ] QuickTime and OBS compatibility verified
+- [ ] Public-API cursor engine replaces private WindowServer behavior
+- [ ] App Sandbox target passes on-device recording tests
+- [ ] Mac App Store archive, privacy manifest, listing, and TestFlight build pass
 
 ## Quality target
 

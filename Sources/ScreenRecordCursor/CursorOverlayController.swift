@@ -12,7 +12,10 @@ final class CursorOverlayController {
     private var overlayView: CursorOverlayView?
     private var frameTimer: DispatchSourceTimer?
     private var clickMonitor: GlobalClickMonitor?
-    private var kineticModel = KineticCursorModel()
+    private var kineticResponse = KineticResponse.smooth
+    private var kineticModel = KineticCursorModel(
+        configuration: KineticResponse.smooth.configuration
+    )
     private let soundPlayer = ClickSoundPlayer()
     private let nativeCursorVisibility = NativeCursorVisibilityController()
     private var lastPosition: CGPoint?
@@ -30,8 +33,10 @@ final class CursorOverlayController {
     func start() -> Bool {
         guard panel == nil else { return true }
 
+        let settings = settingsProvider()
         let view = CursorOverlayView(frame: CGRect(origin: .zero, size: overlaySize))
-        view.settings = settingsProvider()
+        view.settings = settings
+        applyKineticResponse(settings.kineticResponse)
 
         let panel = CursorOverlayPanel(
             contentRect: CGRect(origin: .zero, size: overlaySize),
@@ -103,11 +108,9 @@ final class CursorOverlayController {
     }
 
     func refreshSettings() {
-        overlayView?.settings = settingsProvider()
-    }
-
-    func previewClickSound(style: ClickSoundStyle, volume: Float) {
-        soundPlayer.play(style: style, volume: volume)
+        let settings = settingsProvider()
+        applyKineticResponse(settings.kineticResponse)
+        overlayView?.settings = settings
     }
 
     private func updateFrame() {
@@ -145,6 +148,13 @@ final class CursorOverlayController {
         if let sound = clickSoundProvider() {
             soundPlayer.play(style: sound.style, volume: sound.volume)
         }
+    }
+
+    private func applyKineticResponse(_ response: KineticResponse) {
+        guard response != kineticResponse else { return }
+
+        kineticResponse = response
+        kineticModel = KineticCursorModel(configuration: response.configuration)
     }
 }
 

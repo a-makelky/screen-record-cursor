@@ -13,7 +13,9 @@ struct ScreenRecordCursorApp: App {
                 .environmentObject(state)
         } label: {
             Label(
-                "Screen Recording Cursor",
+                state.isActive
+                    ? "Screen Recording Cursor, enhanced cursor on"
+                    : "Screen Recording Cursor, enhanced cursor off",
                 systemImage: state.isActive ? "cursorarrow.rays" : "cursorarrow"
             )
         }

@@ -54,13 +54,23 @@ cursor is rendered in a separate transparent window.
 
 - [ ] First-run instructions appear once
 - [ ] Try the cursor enables one enlarged cursor
+- [ ] First-run title, explanation, and primary button meet contrast requirements
 - [ ] Menu-bar popover fits completely on the built-in MacBook display
-- [ ] Popover shows only the six daily summaries and does not scroll
-- [ ] Every summary row opens the matching Cursor, Clicks, or General section
-- [ ] Settings opens as a separate 824 × 488 point window
+- [ ] Popover shows five interactive quick-control rows and does not scroll
+- [ ] Cursor color presets and the custom color picker work from the popover
+- [ ] Cursor size presets work from the popover and a fresh install selects 1.5×
+- [ ] An unchanged legacy 1.65× default migrates once to the 1.5× preset
+- [ ] Click ring changes between On Click, Always, and Off from the popover
+- [ ] Click feedback selects a visual effect and mutes sound from the popover
+- [ ] Kinetic cursor turns on and off from the popover
+- [ ] One Settings entry opens the advanced Settings window
+- [ ] Settings opens as a separate, resizable 824 × 520 point window
 - [ ] Cursor, Clicks, and General sections fit without scrolling
-- [ ] Setting Ring to Off or turning off Click sound hides dependent controls
+- [ ] Setting Click ring to Off or turning off Click sound hides dependent controls
 - [ ] Settings spacing remains clear in both light and dark mode
+- [ ] Menu-bar status announces whether the enhanced cursor is on or off
+- [ ] Click effects include a distinct system icon and text label
+- [ ] Kinetic motion defaults to Smooth; Smooth, Balanced, and Quick all persist
 - [ ] A failed native-cursor hide leaves Recording mode off
 - [ ] Launch at Login works after the app is moved to Applications
 - [ ] Launch at Login survives a reboot
@@ -74,7 +84,7 @@ cursor is rendered in a separate transparent window.
 - [ ] Ring Off mode leaves only the enlarged cursor and optional click sound
 - [ ] Explicitly saved Ring on/off preferences migrate to Always/Off after updating
 - [ ] Every cursor color retains a high-contrast outline
-- [ ] All five click sounds preview and play during Recording mode
+- [ ] All five click sounds play during Recording mode
 - [ ] Default Control-semicolon shortcut toggles Recording mode from another app
 - [ ] Open shortcut field captures any supported one- or two-key combination
 - [ ] Plain typing keys without a modifier are rejected

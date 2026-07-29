@@ -59,8 +59,8 @@ final class SettingsWindowController: NSObject, NSWindowDelegate {
         let window = NSWindow(contentViewController: hostingController)
 
         window.title = "Screen Recording Cursor"
-        window.styleMask = [.titled, .closable, .miniaturizable]
-        window.setContentSize(NSSize(width: 824, height: 488))
+        window.styleMask = [.titled, .closable, .miniaturizable, .resizable]
+        window.setContentSize(NSSize(width: 824, height: 520))
         window.minSize = NSSize(width: 720, height: 470)
         window.isReleasedWhenClosed = false
         window.center()

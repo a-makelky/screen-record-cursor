@@ -1,7 +1,7 @@
 # Screen Recording Cursor
 
-A free, local macOS menu-bar utility that makes the pointer easy to follow in
-screen recordings.
+A local macOS menu-bar utility that makes the pointer easy to follow in screen
+recordings.
 
 Screen Recording Cursor has no AI, account, subscription, analytics, or network
 connection. It is a native Swift and AppKit app with no third-party dependencies.
@@ -18,7 +18,10 @@ connection. It is a native Swift and AppKit app with no third-party dependencies
 - Offers an optional kinetic cursor whose tail swings behind its motion
 - Includes a guided first-run cursor test and Launch at Login
 - Toggles Recording mode globally with a customizable two-key shortcut
-- Uses a compact menu-bar panel for daily controls and a focused Settings window
+- Puts color, size, click ring, click feedback, sound mute, and kinetic mode in a
+  compact daily-control panel
+- Keeps precise appearance, sound, motion, startup, and shortcut controls in a
+  focused Settings window
 - Stores settings locally in `UserDefaults`
 
 The ring and cursor overlay never receive mouse events. Your clicks, drags,
@@ -86,10 +89,13 @@ watchdog repairs the hide request if Dock or WindowServer activity makes the
 native pointer visible. Turning Recording mode off or quitting the app restores
 the native cursor.
 
-`SetsCursorInBackground` is an undocumented macOS implementation detail, so this
-build is intended for direct, open-source distribution rather than the Mac App
-Store. The symbols are resolved at runtime: if Apple removes them, the app still
-launches and logs the unsupported condition instead of crashing.
+`SetsCursorInBackground` is an undocumented macOS implementation detail, so the
+current development build is not eligible for the Mac App Store. It is a test
+vehicle while a public-API recording engine is developed for the official
+$9.99 Mac App Store release. This binary must never be submitted to App Review.
+
+The private symbols are resolved at runtime. If Apple removes them, the app
+still launches and reports the unsupported condition instead of crashing.
 
 Some recorders independently add a native cursor after capturing the screen. If
 a finished recording still contains a second cursor, turn off that recorder's
@@ -100,7 +106,8 @@ cursor setting and let Screen Recording Cursor provide the visible pointer.
 Kinetic mode samples the real cursor position at about 60 Hz. The arrow rotates
 around its point until its tail trails opposite the movement direction. The ring
 and click hotspot remain fixed to the actual pointer position, so the stronger
-visual effect does not make clicks inaccurate.
+visual effect does not make clicks inaccurate. Smooth is the default motion
+response, with Balanced and Quick choices in Settings.
 
 The motion model is isolated in `CursorCore` and covered by deterministic unit
 tests.
@@ -149,8 +156,8 @@ setups before the project is labeled stable.
 
 See [GOAL.md](GOAL.md) for the acceptance checklist.
 See [TESTING.md](TESTING.md) for the real-Mac release matrix and
-[docs/PUBLIC_RELEASE.md](docs/PUBLIC_RELEASE.md) for the path to a paid,
-notarized release.
+[docs/PUBLIC_RELEASE.md](docs/PUBLIC_RELEASE.md) for the path to the official
+$9.99 Mac App Store release.
 
 ## License
 

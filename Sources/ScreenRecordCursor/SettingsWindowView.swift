@@ -73,7 +73,7 @@ struct SettingsWindowView: View {
         VStack(alignment: .leading, spacing: 14) {
             heading(
                 "Cursor",
-                subtitle: "Set the pointer and ring used while Recording mode is on."
+                subtitle: "Adjust the pointer, click ring, and optional motion."
             )
 
             settingsCard(title: "Pointer") {
@@ -91,11 +91,31 @@ struct SettingsWindowView: View {
                     valueLabel: String(format: "%.1f×", state.cursorScale)
                 )
                 Toggle("Kinetic cursor", isOn: $state.kineticEnabled)
+
+                if state.kineticEnabled {
+                    HStack(spacing: 12) {
+                        Text("Motion")
+                            .font(.callout)
+                            .foregroundStyle(.secondary)
+
+                        Spacer()
+
+                        Picker("Motion", selection: $state.kineticResponse) {
+                            ForEach(KineticResponse.allCases) { response in
+                                Text(response.label).tag(response)
+                            }
+                        }
+                        .labelsHidden()
+                        .pickerStyle(.segmented)
+                        .frame(width: 260)
+                        .accessibilityLabel("Kinetic cursor motion")
+                    }
+                }
             }
 
             settingsCard {
                 HStack(spacing: 16) {
-                    Text("Ring")
+                    Text("Click ring")
                         .font(.callout.weight(.semibold))
                     Spacer()
 
@@ -146,20 +166,25 @@ struct SettingsWindowView: View {
 
             settingsCard(title: "Click feedback") {
                 if state.ringVisibility.allowsClickFeedback {
-                    Picker("Effect", selection: $state.clickEffect) {
+                    Text("Visual effect")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+
+                    HStack(spacing: 8) {
                         ForEach(availableClickEffects) { effect in
-                            Text(effect.label).tag(effect)
+                            clickEffectButton(effect)
                         }
                     }
-                    .pickerStyle(.segmented)
                 } else {
-                    Text("Set Ring to Always or On Click to use visual feedback.")
+                    Text(
+                        "Turn on the Click ring in Cursor settings to use a visual effect."
+                    )
                         .font(.callout)
                         .foregroundStyle(.secondary)
                 }
-            }
 
-            settingsCard {
+                Divider()
+
                 HStack {
                     Text("Click sound")
                         .font(.callout.weight(.semibold))
@@ -184,14 +209,6 @@ struct SettingsWindowView: View {
                         }
                         .labelsHidden()
                         .frame(width: 190)
-
-                        Button {
-                            state.previewClickSound()
-                        } label: {
-                            Image(systemName: "speaker.wave.2")
-                        }
-                        .help("Preview sound")
-                        .accessibilityLabel("Preview sound")
                     }
 
                     sliderRow(
@@ -362,7 +379,10 @@ struct SettingsWindowView: View {
                             .frame(width: 20, height: 20)
                     }
                     .buttonStyle(.plain)
-                    .accessibilityLabel("Use \(hex)")
+                    .accessibilityLabel("Use \(hex.accessibleColorName)")
+                    .accessibilityValue(
+                        selection.wrappedValue == hex ? "Selected" : "Not selected"
+                    )
                 }
 
                 Button {
@@ -403,6 +423,44 @@ struct SettingsWindowView: View {
         }
     }
 
+    private func clickEffectButton(_ effect: ClickEffect) -> some View {
+        let isSelected = state.clickEffect == effect
+
+        return Button {
+            state.clickEffect = effect
+        } label: {
+            VStack(spacing: 6) {
+                Image(systemName: effect.systemImage)
+                    .font(.system(size: 17, weight: .medium))
+                    .frame(height: 20)
+
+                Text(effect.label)
+                    .font(.caption)
+            }
+            .frame(maxWidth: .infinity)
+            .frame(height: 54)
+            .foregroundStyle(isSelected ? Color.accentColor : Color.primary)
+            .background(
+                isSelected
+                    ? Color.accentColor.opacity(0.12)
+                    : Color.clear,
+                in: RoundedRectangle(cornerRadius: 8)
+            )
+            .overlay {
+                RoundedRectangle(cornerRadius: 8)
+                    .strokeBorder(
+                        isSelected
+                            ? Color.accentColor
+                            : Color(nsColor: .separatorColor),
+                        lineWidth: isSelected ? 1.5 : 1
+                    )
+            }
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("\(effect.label) click effect")
+        .accessibilityValue(isSelected ? "Selected" : "Not selected")
+    }
+
     private func sliderRow(
         title: String,
         value: Binding<Double>,
@@ -441,7 +499,7 @@ struct SettingsWindowView: View {
 }
 
 @MainActor
-private final class ColorPanelCoordinator: NSObject {
+final class ColorPanelCoordinator: NSObject {
     static let shared = ColorPanelCoordinator()
 
     private var onChange: ((NSColor) -> Void)?

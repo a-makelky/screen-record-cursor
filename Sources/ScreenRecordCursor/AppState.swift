@@ -33,6 +33,13 @@ final class AppState: ObservableObject {
         "#00C7BE"  // teal
     ]
 
+    static let quickCursorColors = [
+        "#000000", // black
+        "#FFFFFF", // white
+        "#007AFF", // blue
+        "#AF52DE"  // purple
+    ]
+
     @Published private(set) var isActive = false
     @Published private(set) var statusMessage: String?
     @Published private(set) var hasCompletedOnboarding: Bool
@@ -125,6 +132,13 @@ final class AppState: ObservableObject {
         }
     }
 
+    @Published var kineticResponse: KineticResponse {
+        didSet {
+            save(kineticResponse.rawValue, for: Keys.kineticResponse)
+            overlayController.refreshSettings()
+        }
+    }
+
     private let defaults = UserDefaults.standard
     private let launchAtLoginController = LaunchAtLoginController()
     private lazy var globalHotKeyController = GlobalHotKeyController {
@@ -141,11 +155,13 @@ final class AppState: ObservableObject {
         static let ringDiameter = "ringDiameter"
         static let ringThickness = "ringThickness"
         static let cursorScale = "cursorScale"
+        static let migratedDefaultCursorScale = "migratedDefaultCursorScale"
         static let clickEffect = "clickEffect"
         static let soundEnabled = "soundEnabled"
         static let soundVolume = "soundVolume"
         static let soundStyle = "soundStyle"
         static let kineticEnabled = "kineticEnabled"
+        static let kineticResponse = "kineticResponse"
         static let hasCompletedOnboarding = "hasCompletedOnboarding"
         static let hotKeyEnabled = "hotKeyEnabled"
         static let hotKeyModifier = "hotKeyModifier"
@@ -159,12 +175,13 @@ final class AppState: ObservableObject {
             Keys.cursorColorHex: "#000000",
             Keys.ringDiameter: 44.0,
             Keys.ringThickness: 4.0,
-            Keys.cursorScale: 1.65,
+            Keys.cursorScale: 1.5,
             Keys.clickEffect: ClickEffect.ripple.rawValue,
             Keys.soundEnabled: true,
             Keys.soundVolume: 0.28,
             Keys.soundStyle: ClickSoundStyle.mouseClick.rawValue,
             Keys.kineticEnabled: false,
+            Keys.kineticResponse: KineticResponse.smooth.rawValue,
             Keys.hotKeyEnabled: true,
             Keys.hotKeyModifier: HotKeyModifier.control.rawValue,
             Keys.hotKeyKeyCode: Int(HotKeyShortcut.defaultShortcut.keyCode),
@@ -184,7 +201,12 @@ final class AppState: ObservableObject {
         ringVisibility = initialRingVisibility
         ringDiameter = defaults.double(forKey: Keys.ringDiameter)
         ringThickness = defaults.double(forKey: Keys.ringThickness)
-        cursorScale = defaults.double(forKey: Keys.cursorScale)
+        let storedCursorScale = defaults.double(forKey: Keys.cursorScale)
+        let shouldMigrateDefaultCursorScale = (
+            !defaults.bool(forKey: Keys.migratedDefaultCursorScale)
+                && abs(storedCursorScale - 1.65) < 0.001
+        )
+        cursorScale = shouldMigrateDefaultCursorScale ? 1.5 : storedCursorScale
         let storedClickEffect = ClickEffect(
             rawValue: defaults.string(forKey: Keys.clickEffect) ?? ""
         ) ?? .ripple
@@ -197,6 +219,9 @@ final class AppState: ObservableObject {
             rawValue: defaults.string(forKey: Keys.soundStyle) ?? ""
         ) ?? .mouseClick
         kineticEnabled = defaults.bool(forKey: Keys.kineticEnabled)
+        kineticResponse = KineticResponse(
+            rawValue: defaults.string(forKey: Keys.kineticResponse) ?? ""
+        ) ?? .smooth
         hasCompletedOnboarding = defaults.bool(
             forKey: Keys.hasCompletedOnboarding
         )
@@ -216,9 +241,10 @@ final class AppState: ObservableObject {
                     ringVisibility: .onClick,
                     ringDiameter: 44,
                     ringThickness: 4,
-                    cursorScale: 1.65,
+                    cursorScale: 1.5,
                     clickEffect: .ripple,
-                    kineticEnabled: false
+                    kineticEnabled: false,
+                    kineticResponse: .smooth
                 )
             },
             clickSoundProvider: { [weak self] in
@@ -236,6 +262,12 @@ final class AppState: ObservableObject {
         if defaults.string(forKey: Keys.ringVisibility) == nil {
             save(ringVisibility.rawValue, for: Keys.ringVisibility)
         }
+        if !defaults.bool(forKey: Keys.migratedDefaultCursorScale) {
+            if shouldMigrateDefaultCursorScale {
+                save(cursorScale, for: Keys.cursorScale)
+            }
+            save(true, for: Keys.migratedDefaultCursorScale)
+        }
     }
 
     var visualSettings: CursorVisualSettings {
@@ -247,7 +279,8 @@ final class AppState: ObservableObject {
             ringThickness: ringThickness,
             cursorScale: cursorScale,
             clickEffect: clickEffect,
-            kineticEnabled: kineticEnabled
+            kineticEnabled: kineticEnabled,
+            kineticResponse: kineticResponse
         )
     }
 
@@ -387,25 +420,19 @@ final class AppState: ObservableObject {
         ringVisibility = .onClick
         ringDiameter = 44
         ringThickness = 4
-        cursorScale = 1.65
+        cursorScale = 1.5
         clickEffect = .ripple
         soundEnabled = true
         soundVolume = 0.28
         soundStyle = .mouseClick
         kineticEnabled = false
+        kineticResponse = .smooth
         hotKeyShortcut = .defaultShortcut
         saveHotKeyShortcut()
         if hotKeyEnabled {
             _ = globalHotKeyController.register(shortcut: hotKeyShortcut)
         }
         statusMessage = "Appearance, motion, click, and shortcut settings were reset."
-    }
-
-    func previewClickSound() {
-        overlayController.previewClickSound(
-            style: soundStyle,
-            volume: Float(soundVolume)
-        )
     }
 
     func stopForSystemTransition() {

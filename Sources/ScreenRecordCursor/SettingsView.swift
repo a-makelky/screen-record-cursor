@@ -40,11 +40,11 @@ struct SettingsView: View {
         VStack(alignment: .leading, spacing: 16) {
             Image(systemName: "cursorarrow.motionlines")
                 .font(.system(size: 32, weight: .semibold))
-                .foregroundStyle(Color.accentColor)
+                .foregroundStyle(.primary)
                 .accessibilityHidden(true)
 
             VStack(alignment: .leading, spacing: 5) {
-                Text("A cursor made for recording")
+                Text("Make your cursor easy to follow")
                     .font(.title3.weight(.semibold))
                 Text("Turn it on before you record. Everything stays on your Mac.")
                     .font(.callout)
@@ -56,9 +56,17 @@ struct SettingsView: View {
                 state.completeOnboarding(startTest: true)
             } label: {
                 Text("Try the cursor")
+                    .font(.body.weight(.semibold))
+                    .foregroundStyle(Color(nsColor: .windowBackgroundColor))
                     .frame(maxWidth: .infinity)
+                    .frame(height: 30)
+                    .background(
+                        Color.primary,
+                        in: RoundedRectangle(cornerRadius: 7)
+                    )
             }
-            .buttonStyle(.borderedProminent)
+            .buttonStyle(.plain)
+            .accessibilityHint("Turns on the enhanced cursor")
 
             Button("Set up later") {
                 state.completeOnboarding(startTest: false)
@@ -74,7 +82,7 @@ struct SettingsView: View {
             VStack(alignment: .leading, spacing: 3) {
                 Text("Screen Recording Cursor")
                     .font(.headline)
-                Text(state.isActive ? "Recording mode is on" : "Ready when you are")
+                Text(state.isActive ? "Enhanced cursor is on" : "Enhanced cursor is off")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -87,65 +95,165 @@ struct SettingsView: View {
                     set: { state.setRecordingMode($0) }
                 )
             )
-            .help("Show or hide the enhanced recording cursor")
+            .help("Turn the enhanced cursor on or off")
         }
-        .frame(height: 64)
+        .frame(height: 58)
     }
 
     private var quickControls: some View {
         VStack(spacing: 0) {
-            quickRow(
-                title: "Ring",
-                value: state.ringVisibility.label,
-                systemImage: "circle.fill",
-                color: Color(nsColor: NSColor(hex: state.colorHex) ?? .systemRed),
-                section: .cursor
-            )
+            quickControlRow(title: "Cursor color") {
+                HStack(spacing: 6) {
+                    ForEach(AppState.quickCursorColors, id: \.self) { hex in
+                        quickColorButton(hex: hex)
+                    }
 
-            quickRow(
-                title: "Cursor",
-                value: String(format: "%.1f×", state.cursorScale),
-                systemImage: "cursorarrow",
-                color: Color(
-                    nsColor: NSColor(hex: state.cursorColorHex) ?? .labelColor
-                ),
-                section: .cursor
-            )
+                    Button {
+                        ColorPanelCoordinator.shared.present(
+                            title: "Custom cursor color",
+                            color: NSColor(hex: state.cursorColorHex) ?? .black
+                        ) { color in
+                            state.cursorColorHex = color.hexString
+                        }
+                    } label: {
+                        ZStack {
+                            Circle()
+                                .fill(
+                                    Color(
+                                        nsColor: NSColor(hex: state.cursorColorHex)
+                                            ?? .black
+                                    )
+                                )
+                            Circle()
+                                .strokeBorder(
+                                    Color.primary.opacity(0.35),
+                                    lineWidth: 1
+                                )
+                            Image(systemName: "ellipsis")
+                                .font(.system(size: 8, weight: .bold))
+                                .foregroundStyle(
+                                    Color(
+                                        nsColor: (
+                                            NSColor(hex: state.cursorColorHex)
+                                                ?? .black
+                                        ).contrastingStrokeColor
+                                    )
+                                )
+                        }
+                        .frame(width: 22, height: 22)
+                    }
+                    .buttonStyle(.plain)
+                    .help("Choose a custom cursor color")
+                    .accessibilityLabel("Choose a custom cursor color")
+                }
+            }
 
-            quickRow(
-                title: "Click feedback",
-                value: state.ringVisibility.allowsClickFeedback
-                    ? state.clickEffect.label
-                    : "Off",
-                systemImage: "cursorarrow.click",
-                color: .accentColor,
-                section: .clicks
-            )
+            quickControlRow(title: "Cursor size") {
+                HStack(spacing: 4) {
+                    ForEach(CursorScalePreset.quickChoices) { preset in
+                        Button {
+                            state.cursorScale = preset.value
+                        } label: {
+                            Text(preset.label)
+                                .font(.caption.weight(.medium))
+                                .frame(width: 37, height: 24)
+                                .background(
+                                    preset.matches(state.cursorScale)
+                                        ? Color.accentColor
+                                        : Color(nsColor: .controlBackgroundColor),
+                                    in: RoundedRectangle(cornerRadius: 6)
+                                )
+                                .foregroundStyle(
+                                    preset.matches(state.cursorScale)
+                                        ? Color.white
+                                        : Color.primary
+                                )
+                                .overlay {
+                                    RoundedRectangle(cornerRadius: 6)
+                                        .strokeBorder(
+                                            preset.matches(state.cursorScale)
+                                                ? Color.clear
+                                                : Color(nsColor: .separatorColor),
+                                            lineWidth: 1
+                                        )
+                                }
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("Set cursor size to \(preset.label)")
+                        .accessibilityValue(
+                            preset.matches(state.cursorScale)
+                                ? "Selected"
+                                : "Not selected"
+                        )
+                    }
+                }
+            }
 
-            quickRow(
+            quickControlRow(title: "Click ring") {
+                Picker("Click ring", selection: $state.ringVisibility) {
+                    ForEach(RingVisibilityMode.allCases) { visibility in
+                        Text(visibility.label).tag(visibility)
+                    }
+                }
+                .labelsHidden()
+                .pickerStyle(.segmented)
+                .frame(width: 190)
+                .accessibilityLabel("Click ring visibility")
+            }
+
+            quickControlRow(title: "Click feedback") {
+                HStack(spacing: 8) {
+                    Menu {
+                        ForEach(availableClickEffects) { effect in
+                            Button {
+                                state.clickEffect = effect
+                            } label: {
+                                Label(effect.label, systemImage: effect.systemImage)
+                            }
+                        }
+                    } label: {
+                        HStack(spacing: 5) {
+                            Image(systemName: currentClickEffect.systemImage)
+                                .accessibilityHidden(true)
+                            Text(currentClickEffect.label)
+                            Image(systemName: "chevron.down")
+                                .font(.system(size: 8, weight: .semibold))
+                                .accessibilityHidden(true)
+                        }
+                        .font(.caption)
+                        .frame(minWidth: 78)
+                    }
+                    .disabled(!state.ringVisibility.allowsClickFeedback)
+                    .accessibilityLabel("Click effect, \(currentClickEffect.label)")
+
+                    Button {
+                        state.soundEnabled.toggle()
+                    } label: {
+                        Image(
+                            systemName: state.soundEnabled
+                                ? "speaker.wave.2.fill"
+                                : "speaker.slash.fill"
+                        )
+                        .font(.system(size: 13, weight: .medium))
+                        .frame(width: 26, height: 24)
+                    }
+                    .buttonStyle(.plain)
+                    .help(state.soundEnabled ? "Mute click sound" : "Turn on click sound")
+                    .accessibilityLabel(
+                        state.soundEnabled ? "Mute click sound" : "Turn on click sound"
+                    )
+                }
+            }
+
+            quickControlRow(
                 title: "Kinetic cursor",
-                value: state.kineticEnabled ? "On" : "Off",
-                systemImage: "cursorarrow.motionlines",
-                color: .accentColor,
-                section: .cursor
-            )
-
-            quickRow(
-                title: "Click sound",
-                value: state.soundEnabled ? state.soundStyle.label : "Off",
-                systemImage: "speaker.wave.2.fill",
-                color: .accentColor,
-                section: .clicks
-            )
-
-            quickRow(
-                title: "Shortcut",
-                value: state.hotKeyEnabled ? state.hotKeyLabel : "Off",
-                systemImage: "keyboard",
-                color: .secondary,
-                section: .general,
                 showsDivider: false
-            )
+            ) {
+                Toggle("", isOn: $state.kineticEnabled)
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                    .accessibilityLabel("Kinetic cursor")
+            }
         }
     }
 
@@ -165,56 +273,65 @@ struct SettingsView: View {
             .keyboardShortcut("q")
         }
         .font(.callout)
-        .frame(height: 48)
+        .frame(height: 44)
     }
 
-    private func quickRow(
+    private func quickControlRow<Control: View>(
         title: String,
-        value: String,
-        systemImage: String,
-        color: Color,
-        section: SettingsSection,
-        showsDivider: Bool = true
+        showsDivider: Bool = true,
+        @ViewBuilder control: () -> Control
     ) -> some View {
-        Button {
-            SettingsWindowController.shared.show(section: section)
-        } label: {
-            VStack(spacing: 0) {
-                HStack(spacing: 10) {
-                    Image(systemName: systemImage)
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundStyle(color)
-                        .frame(width: 18, height: 18)
-                        .accessibilityHidden(true)
+        VStack(spacing: 0) {
+            HStack(spacing: 12) {
+                Text(title)
+                    .font(.callout.weight(.medium))
 
-                    Text(title)
-                        .font(.callout.weight(.medium))
-                        .foregroundStyle(.primary)
+                Spacer(minLength: 8)
 
-                    Spacer(minLength: 8)
+                control()
+            }
+            .frame(height: 46)
 
-                    Text(value)
-                        .font(.callout)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
-
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 10, weight: .semibold))
-                        .foregroundStyle(.tertiary)
-                        .accessibilityHidden(true)
-                }
-                .frame(height: 46)
-                .contentShape(Rectangle())
-
-                if showsDivider {
-                    Divider()
-                        .padding(.leading, 28)
-                }
+            if showsDivider {
+                Divider()
             }
         }
+    }
+
+    private func quickColorButton(hex: String) -> some View {
+        let isSelected = state.cursorColorHex == hex
+        let color = NSColor(hex: hex) ?? .black
+
+        return Button {
+            state.cursorColorHex = hex
+        } label: {
+            Circle()
+                .fill(Color(nsColor: color))
+                .overlay {
+                    Circle()
+                        .strokeBorder(
+                            isSelected
+                                ? Color.accentColor
+                                : Color.primary.opacity(0.25),
+                            lineWidth: isSelected ? 3 : 1
+                        )
+                }
+                .padding(isSelected ? 1 : 0)
+                .frame(width: 22, height: 22)
+        }
         .buttonStyle(.plain)
-        .accessibilityLabel("\(title), \(value)")
-        .accessibilityHint("Opens \(section.label) settings")
+        .accessibilityLabel("Use \(hex.accessibleColorName) cursor")
+        .accessibilityValue(isSelected ? "Selected" : "Not selected")
+    }
+
+    private var availableClickEffects: [ClickEffect] {
+        state.ringVisibility == .onClick
+            ? ClickEffect.animatedCases
+            : ClickEffect.allCases
+    }
+
+    private var currentClickEffect: ClickEffect {
+        state.ringVisibility.allowsClickFeedback ? state.clickEffect : .off
     }
 
     private func status(_ message: String) -> some View {
@@ -225,7 +342,9 @@ struct SettingsView: View {
 
             Text(message)
                 .font(.caption)
+                .lineLimit(3)
                 .fixedSize(horizontal: false, vertical: true)
+                .help(message)
 
             Spacer(minLength: 4)
 
@@ -243,6 +362,24 @@ struct SettingsView: View {
             in: RoundedRectangle(cornerRadius: 8)
         )
     }
+}
+
+private struct CursorScalePreset: Identifiable {
+    let label: String
+    let value: Double
+
+    var id: Double { value }
+
+    func matches(_ currentValue: Double) -> Bool {
+        abs(value - currentValue) < 0.01
+    }
+
+    static let quickChoices = [
+        CursorScalePreset(label: "1×", value: 1),
+        CursorScalePreset(label: "1.5×", value: 1.5),
+        CursorScalePreset(label: "2×", value: 2),
+        CursorScalePreset(label: "3×", value: 3)
+    ]
 }
 
 struct PersistentRecordingSwitch: View {

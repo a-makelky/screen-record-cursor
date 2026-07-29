@@ -18,6 +18,15 @@ enum ClickEffect: String, CaseIterable, Identifiable {
         }
     }
 
+    var systemImage: String {
+        switch self {
+        case .ripple: "dot.radiowaves.left.and.right"
+        case .pulse: "circle.inset.filled"
+        case .both: "cursorarrow.click"
+        case .off: "circle.slash"
+        }
+    }
+
     static let animatedCases: [ClickEffect] = [.ripple, .pulse, .both]
 }
 
@@ -70,6 +79,36 @@ struct CursorVisualSettings {
     var cursorScale: CGFloat
     var clickEffect: ClickEffect
     var kineticEnabled: Bool
+    var kineticResponse: KineticResponse
+}
+
+extension KineticResponse {
+    var label: String {
+        switch self {
+        case .smooth: "Smooth"
+        case .balanced: "Balanced"
+        case .quick: "Quick"
+        }
+    }
+}
+
+extension String {
+    var accessibleColorName: String {
+        switch uppercased() {
+        case "#000000": "black"
+        case "#FFFFFF": "white"
+        case "#FF3B30": "red"
+        case "#FF9500": "orange"
+        case "#FFCC00": "yellow"
+        case "#34C759": "green"
+        case "#00C7BE": "teal"
+        case "#007AFF": "blue"
+        case "#5856D6": "indigo"
+        case "#AF52DE": "purple"
+        case "#FF2D55": "pink"
+        default: "custom"
+        }
+    }
 }
 
 extension NSColor {
